@@ -403,7 +403,7 @@ pub extern "C" fn redb_insert(
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn redb_commit(tx: *mut c_void) -> i32 {
+pub extern "C" fn redb_write_tx_commit(tx: *mut c_void) -> i32 {
     let tx = unsafe {
         assert!(!tx.is_null());
         Box::from_raw(tx as *mut redb::WriteTransaction)

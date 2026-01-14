@@ -88,8 +88,8 @@ namespace Redb
         [DllImport(__DllName, EntryPoint = "redb_insert", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern int redb_insert(void* table, byte* key, nuint key_len, byte* value, nuint value_len);
 
-        [DllImport(__DllName, EntryPoint = "redb_commit", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_commit(void* tx);
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_commit", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_commit(void* tx);
 
         [DllImport(__DllName, EntryPoint = "redb_begin_read", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern int redb_begin_read(void* db, void** @out);

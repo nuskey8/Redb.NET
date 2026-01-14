@@ -82,7 +82,7 @@ public unsafe struct WriteTransaction : IDisposable
 
     public void Commit()
     {
-        var code = NativeMethods.redb_commit(tx);
+        var code = NativeMethods.redb_write_tx_commit(tx);
         if (code != 0)
         {
             throw new RedbDatabaseException("Failed to commit transaction", code);
