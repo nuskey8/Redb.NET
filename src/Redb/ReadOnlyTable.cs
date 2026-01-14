@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
 
 namespace Redb;
 
@@ -29,7 +30,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     {
         if (!TryGet(key, out var value))
         {
-            throw new RedbDatabaseException("Key not found", NativeMethods.REDB_ERROR_KEY_NOT_FOUND);
+            throw new RedbDatabaseException($"Key `{Encoding.UTF8.GetString(key)}` not found", NativeMethods.REDB_ERROR_KEY_NOT_FOUND);
         }
         return value;
     }
@@ -57,10 +58,6 @@ public unsafe struct ReadOnlyTable : IDisposable
 }
 
 public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
-#if NET10_0_OR_GREATER
-    where TKey : allows ref struct
-    where TValue : allows ref struct
-#endif
 {
     ReadOnlyTable inner;
 
@@ -78,7 +75,7 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
     {
         if (!TryGet(key, out var value))
         {
-            throw new RedbDatabaseException("Key not found", NativeMethods.REDB_ERROR_KEY_NOT_FOUND);
+            throw new RedbDatabaseException($"Key `{key}` not found", NativeMethods.REDB_ERROR_KEY_NOT_FOUND);
         }
         return value;
     }
