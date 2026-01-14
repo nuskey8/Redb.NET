@@ -6,7 +6,7 @@ redb (An embedded key-value database for Rust) bindings for .NET and Unity.
 [![Releases](https://img.shields.io/github/release/nuskey8/Redb.svg)](https://github.com/nuskey8/Redb/releases)
 [![license](https://img.shields.io/badge/LICENSE-MIT-green.svg)](LICENSE)
 
-[English](./README.md) | 日本語
+English | [日本語](/README_JA.md)
 
 ## Overview
 
