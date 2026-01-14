@@ -1,16 +1,6 @@
 name: Build Native Libraries
 
 on:
-    push:
-        branches: [main, develop]
-        paths:
-            - "native/redb-ffi/**"
-            - ".github/workflows/build-native.yml"
-    pull_request:
-        branches: [main, develop]
-        paths:
-            - "native/redb-ffi/**"
-            - ".github/workflows/build-native.yml"
     workflow_dispatch:
 
 jobs:
