@@ -10,9 +10,6 @@ public sealed class PrimitiveRedbEncoding : IRedbEncoding
     public static readonly PrimitiveRedbEncoding Instance = new();
 
     public static bool CanEncode<T>()
-#if NET10_0_OR_GREATER
-    where T : allows ref struct
-#endif
     {
         return typeof(T) == typeof(int)
             || typeof(T) == typeof(uint)
@@ -28,21 +25,12 @@ public sealed class PrimitiveRedbEncoding : IRedbEncoding
             || typeof(T) == typeof(double)
             || typeof(T) == typeof(decimal)
             || typeof(T) == typeof(string)
-#if NET10_0_OR_GREATER
-            || typeof(T) == typeof(ReadOnlySpan<char>)
-            || typeof(T) == typeof(Span<char>)
-            || typeof(T) == typeof(ReadOnlySpan<byte>)
-            || typeof(T) == typeof(Span<byte>)
-#endif
             || typeof(T) == typeof(Guid)
             || typeof(T) == typeof(DateTime)
             || typeof(T) == typeof(DateTimeOffset);
     }
 
     public bool TryEncode<T>(T value, Span<byte> buffer, out int bytesWritten)
-#if NET10_0_OR_GREATER
-        where T : allows ref struct
-#endif
     {
         if (typeof(T) == typeof(int))
         {
@@ -236,36 +224,6 @@ public sealed class PrimitiveRedbEncoding : IRedbEncoding
             bytesWritten = 8;
             return true;
         }
-#if NET10_0_OR_GREATER
-        else if (typeof(T) == typeof(ReadOnlySpan<char>) || typeof(T) == typeof(Span<char>))
-        {
-            ReadOnlySpan<char> span = typeof(T) == typeof(ReadOnlySpan<char>)
-                ? Unsafe.As<T, ReadOnlySpan<char>>(ref value)
-                : Unsafe.As<T, Span<char>>(ref value);
-            var byteCount = Encoding.UTF8.GetByteCount(span);
-            if (buffer.Length < byteCount)
-            {
-                bytesWritten = 0;
-                return false;
-            }
-            bytesWritten = Encoding.UTF8.GetBytes(span, buffer);
-            return true;
-        }
-        else if (typeof(T) == typeof(ReadOnlySpan<byte>) || typeof(T) == typeof(Span<byte>))
-        {
-            ReadOnlySpan<byte> span = typeof(T) == typeof(ReadOnlySpan<byte>)
-                ? Unsafe.As<T, ReadOnlySpan<byte>>(ref value)
-                : Unsafe.As<T, Span<byte>>(ref value);
-            if (buffer.Length < span.Length)
-            {
-                bytesWritten = 0;
-                return false;
-            }
-            span.CopyTo(buffer);
-            bytesWritten = span.Length;
-            return true;
-        }
-#endif
         else
         {
             throw new NotSupportedException($"Type {typeof(T)} is not supported by {nameof(PrimitiveRedbEncoding)}.");
@@ -273,9 +231,6 @@ public sealed class PrimitiveRedbEncoding : IRedbEncoding
     }
 
     public T Decode<T>(ReadOnlySpan<byte> data)
-#if NET10_0_OR_GREATER
-        where T : allows ref struct
-#endif
     {
         if (typeof(T) == typeof(int))
         {
