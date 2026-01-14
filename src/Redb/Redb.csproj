@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net8.0;netstandard2.1</TargetFrameworks>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!-- NuGet -->
+    <PackageId>Redb</PackageId>
+    <Description>Redb (An embedded key-value database for Rust) bindings for .NET and Unity.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- <None Include="runtimes\linux-arm64\native\libredb.so" Pack="true"
+      PackagePath="runtimes\linux-arm64\native\" CopyToOutputDirectory="Always" />
+    <None Include="runtimes\linux-x64\native\libredb.so" Pack="true"
+      PackagePath="runtimes\linux-x64\native\" CopyToOutputDirectory="Always" /> -->
+    <None Include="runtimes\osx-arm64\native\libredb.dylib" Pack="true"
+      PackagePath="runtimes\osx-arm64\native\" CopyToOutputDirectory="Always" />
+    <!-- <None Include="runtimes\win-x64\native\libredb.dll" Pack="true"
+      PackagePath="runtimes\win-x64\native\" CopyToOutputDirectory="Always" />
+    <None Include="runtimes\win-x86\native\libredb.dll" Pack="true"
+      PackagePath="runtimes\win-x86\native\" CopyToOutputDirectory="Always" /> -->
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework) == 'netstandard2.1'">
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="PolySharp" Version="1.15.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
+    <EmbeddedResource Include="..\..\LICENSE" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,13 @@
+[package]
+name = "redb"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+redb = "3.1.0"
+
+[build-dependencies]
+csbindgen = "1.9.7"
