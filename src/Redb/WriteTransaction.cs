@@ -98,6 +98,57 @@ public unsafe struct WriteTransaction : IDisposable
         return new Table<TKey, TValue>(database, table);
     }
 
+    public readonly void DeleteTable(ReadOnlySpan<byte> utf8Name)
+    {
+        using var nameBuffer = new NullTerminatedUtf8String(utf8Name);
+        DeleteTableCore(nameBuffer);
+    }
+
+    public readonly void DeleteTable(ReadOnlySpan<char> name)
+    {
+        using var nameBuffer = new NullTerminatedUtf8String(name);
+        DeleteTableCore(nameBuffer);
+    }
+
+    readonly void DeleteTableCore(NullTerminatedUtf8String name)
+    {
+        fixed (byte* namePtr = name)
+        {
+            int code = NativeMethods.redb_write_tx_delete_table(tx, namePtr);
+            if (code != 0)
+            {
+                throw new RedbDatabaseException("Failed to delete table", code);
+            }
+        }
+    }
+
+    public readonly void RenameTable(ReadOnlySpan<byte> oldUtf8Name, ReadOnlySpan<byte> newUtf8Name)
+    {
+        using var oldNameBuffer = new NullTerminatedUtf8String(oldUtf8Name);
+        using var newNameBuffer = new NullTerminatedUtf8String(newUtf8Name);
+        RenameTableCore(oldNameBuffer, newNameBuffer);
+    }
+
+    public readonly void RenameTable(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName)
+    {
+        using var oldNameBuffer = new NullTerminatedUtf8String(oldName);
+        using var newNameBuffer = new NullTerminatedUtf8String(newName);
+        RenameTableCore(oldNameBuffer, newNameBuffer);
+    }
+
+    readonly void RenameTableCore(NullTerminatedUtf8String oldName, NullTerminatedUtf8String newName)
+    {
+        fixed (byte* oldNamePtr = oldName)
+        fixed (byte* newNamePtr = newName)
+        {
+            int code = NativeMethods.redb_write_tx_rename_table(tx, oldNamePtr, newNamePtr);
+            if (code != 0)
+            {
+                throw new RedbDatabaseException("Failed to rename table", code);
+            }
+        }
+    }
+
     public void Commit()
     {
         var code = NativeMethods.redb_write_tx_commit(tx);

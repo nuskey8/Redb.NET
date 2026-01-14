@@ -349,12 +349,39 @@ pub extern "C" fn redb_write_tx_delete_table(tx: *mut c_void, name: *const c_cha
     };
     let str_slice = c_str.to_str().unwrap();
 
-    let table = match tx.open_table(TableDefinition::<&[u8], &[u8]>::new(str_slice)) {
-        Ok(table) => table,
-        Err(err) => return table_error_code(&err),
+    match tx.delete_table(TableDefinition::<&[u8], &[u8]>::new(str_slice)) {
+        Ok(_) => REDB_OK,
+        Err(err) => table_error_code(&err),
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_rename_table(
+    tx: *mut c_void,
+    old_name: *const c_char,
+    new_name: *const c_char,
+) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
     };
 
-    match tx.delete_table(table) {
+    let old_c_str = unsafe {
+        assert!(!old_name.is_null());
+        std::ffi::CStr::from_ptr(old_name)
+    };
+    let old_str_slice = old_c_str.to_str().unwrap();
+
+    let new_c_str = unsafe {
+        assert!(!new_name.is_null());
+        std::ffi::CStr::from_ptr(new_name)
+    };
+    let new_str_slice = new_c_str.to_str().unwrap();
+
+    match tx.rename_table(
+        TableDefinition::<&[u8], &[u8]>::new(old_str_slice),
+        TableDefinition::<&[u8], &[u8]>::new(new_str_slice),
+    ) {
         Ok(_) => REDB_OK,
         Err(err) => table_error_code(&err),
     }
@@ -370,6 +397,22 @@ pub extern "C" fn redb_write_tx_abort(tx: *mut c_void) -> i32 {
     match tx.abort() {
         Ok(_) => REDB_OK,
         Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_commit(tx: *mut c_void) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        Box::from_raw(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.commit() {
+        Ok(_) => REDB_OK,
+        Err(err) => match err {
+            redb::CommitError::Storage(_) => REDB_ERROR_STORAGE_ERROR,
+            _ => todo!(),
+        },
     }
 }
 
@@ -399,22 +442,6 @@ pub extern "C" fn redb_insert(
     match table.insert(key_slice, value_slice) {
         Ok(_) => REDB_OK,
         Err(_) => REDB_ERROR_STORAGE_ERROR,
-    }
-}
-
-#[unsafe(no_mangle)]
-pub extern "C" fn redb_write_tx_commit(tx: *mut c_void) -> i32 {
-    let tx = unsafe {
-        assert!(!tx.is_null());
-        Box::from_raw(tx as *mut redb::WriteTransaction)
-    };
-
-    match tx.commit() {
-        Ok(_) => REDB_OK,
-        Err(err) => match err {
-            redb::CommitError::Storage(_) => REDB_ERROR_STORAGE_ERROR,
-            _ => todo!(),
-        },
     }
 }
 
