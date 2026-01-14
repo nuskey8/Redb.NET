@@ -22,6 +22,24 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
+    public readonly void SetTwoPhaseCommit(bool enable)
+    {
+        var code = NativeMethods.redb_write_tx_set_two_phase_commit(tx, enable);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to call set_two_phase_commit()", code);
+        }
+    }
+
+    public readonly void SetQuickRepair(bool enable)
+    {
+        var code = NativeMethods.redb_write_tx_set_quick_repair(tx, enable);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to call set_quick_repair()", code);
+        }
+    }
+
     public readonly Table OpenTable(ReadOnlySpan<byte> name)
     {
         using var nameBuffer = new NullTerminatedUtf8String(name);
