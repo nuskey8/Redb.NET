@@ -361,6 +361,19 @@ pub extern "C" fn redb_write_tx_delete_table(tx: *mut c_void, name: *const c_cha
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_abort(tx: *mut c_void) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        Box::from_raw(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.abort() {
+        Ok(_) => REDB_OK,
+        Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn redb_insert(
     table: *mut c_void,
     key: *const u8,

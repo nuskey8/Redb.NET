@@ -90,11 +90,16 @@ public unsafe struct WriteTransaction : IDisposable
         tx = null;
     }
 
+
     public void Dispose()
     {
         if (tx != null)
         {
-            NativeMethods.redb_free_write_transaction(tx);
+            var code = NativeMethods.redb_write_tx_abort(tx);
+            if (code != 0)
+            {
+                throw new RedbDatabaseException("Failed to abort transaction", code);
+            }
             tx = null;
         }
     }
