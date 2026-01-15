@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redb;
 
-public unsafe struct Table : IDisposable
+public unsafe sealed class Table : IDisposable
 {
     internal readonly RedbDatabase database;
     void* table;
@@ -15,7 +15,7 @@ public unsafe struct Table : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly void Insert(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
+    public void Insert(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
         ThrowIfDisposed();
 
@@ -28,7 +28,7 @@ public unsafe struct Table : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    readonly void ThrowIfDisposed()
+    void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(table == null, nameof(Table));
     }
@@ -43,16 +43,16 @@ public unsafe struct Table : IDisposable
     }
 }
 
-public unsafe struct Table<TKey, TValue> : IDisposable
+public unsafe sealed class Table<TKey, TValue> : IDisposable
 {
-    Table inner;
+    internal readonly Table inner;
 
     internal Table(RedbDatabase database, void* table)
     {
         inner = new Table(database, table);
     }
 
-    public readonly void Insert(TKey key, TValue value)
+    public void Insert(TKey key, TValue value)
     {
         var encoding = inner.database.Encoding;
 

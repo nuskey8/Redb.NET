@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Redb;
 
-public unsafe struct ReadOnlyTable : IDisposable
+public unsafe sealed class ReadOnlyTable : IDisposable
 {
     internal RedbDatabase database;
     void* table;
@@ -27,7 +27,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly RedbBlob Get(ReadOnlySpan<byte> key)
+    public RedbBlob Get(ReadOnlySpan<byte> key)
     {
         if (!TryGet(key, out var value))
         {
@@ -37,7 +37,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly bool TryGet(ReadOnlySpan<byte> key, out RedbBlob blob)
+    public bool TryGet(ReadOnlySpan<byte> key, out RedbBlob blob)
     {
         ThrowIfDisposed();
 
@@ -59,7 +59,7 @@ public unsafe struct ReadOnlyTable : IDisposable
         }
     }
 
-    public readonly Enumerator GetEnumerator()
+    public Enumerator GetEnumerator()
     {
         ThrowIfDisposed();
 
@@ -70,7 +70,7 @@ public unsafe struct ReadOnlyTable : IDisposable
         return new Enumerator(iter);
     }
 
-    public readonly RangeEnumerable GetRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey)
+    public RangeEnumerable GetRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey)
     {
         ThrowIfDisposed();
 
@@ -87,7 +87,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    readonly void ThrowIfDisposed()
+    void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(table == null, nameof(ReadOnlyTable));
     }
@@ -155,9 +155,9 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 }
 
-public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
+public unsafe sealed class ReadOnlyTable<TKey, TValue> : IDisposable
 {
-    ReadOnlyTable inner;
+    internal readonly ReadOnlyTable inner;
 
     internal ReadOnlyTable(RedbDatabase database, void* table)
     {
@@ -169,7 +169,7 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         inner.Dispose();
     }
 
-    public readonly TValue Get(TKey key)
+    public TValue Get(TKey key)
     {
         if (!TryGet(key, out var value))
         {
@@ -178,7 +178,7 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         return value;
     }
 
-    public readonly bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value)
+    public bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value)
     {
         var encoding = inner.database.Encoding;
 
@@ -211,12 +211,12 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         }
     }
 
-    public readonly Enumerator GetEnumerator()
+    public Enumerator GetEnumerator()
     {
         return new Enumerator(inner.GetEnumerator(), inner.database.Encoding);
     }
 
-    public readonly RangeEnumerable GetRange(TKey startKey, TKey endKey)
+    public RangeEnumerable GetRange(TKey startKey, TKey endKey)
     {
         var encoding = inner.database.Encoding;
         var startBuffer = ArrayPool<byte>.Shared.Rent(256);

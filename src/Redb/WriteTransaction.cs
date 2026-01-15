@@ -3,9 +3,10 @@ using System.Runtime.CompilerServices;
 
 namespace Redb;
 
-public unsafe struct WriteTransaction : IDisposable
+public unsafe sealed class WriteTransaction : IDisposable
 {
     readonly RedbDatabase database;
+    PooledList<Table> openedTables = new(8);
     void* tx;
 
     internal WriteTransaction(RedbDatabase database, void* tx)
@@ -14,7 +15,7 @@ public unsafe struct WriteTransaction : IDisposable
         this.tx = tx;
     }
 
-    public readonly void SetDurability(Durability durability)
+    public void SetDurability(Durability durability)
     {
         ThrowIfDisposed();
 
@@ -25,7 +26,7 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
-    public readonly void SetTwoPhaseCommit(bool enable)
+    public void SetTwoPhaseCommit(bool enable)
     {
         ThrowIfDisposed();
 
@@ -36,7 +37,7 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
-    public readonly void SetQuickRepair(bool enable)
+    public void SetQuickRepair(bool enable)
     {
         ThrowIfDisposed();
 
@@ -47,7 +48,7 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
-    public readonly Table OpenTable(ReadOnlySpan<byte> name)
+    public Table OpenTable(ReadOnlySpan<byte> name)
     {
         ThrowIfDisposed();
 
@@ -55,7 +56,7 @@ public unsafe struct WriteTransaction : IDisposable
         return OpenTableCore(nameBuffer);
     }
 
-    public readonly Table OpenTable(ReadOnlySpan<char> name)
+    public Table OpenTable(ReadOnlySpan<char> name)
     {
         ThrowIfDisposed();
 
@@ -63,7 +64,7 @@ public unsafe struct WriteTransaction : IDisposable
         return OpenTableCore(nameBuffer);
     }
 
-    public readonly Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> name)
+    public Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> name)
     {
         ThrowIfDisposed();
 
@@ -71,7 +72,7 @@ public unsafe struct WriteTransaction : IDisposable
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
 
-    public readonly Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
+    public Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
     {
         ThrowIfDisposed();
 
@@ -79,7 +80,7 @@ public unsafe struct WriteTransaction : IDisposable
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
 
-    readonly Table OpenTableCore(NullTerminatedUtf8String name)
+    Table OpenTableCore(NullTerminatedUtf8String name)
     {
         void* table;
 
@@ -93,10 +94,12 @@ public unsafe struct WriteTransaction : IDisposable
         }
 
         Debug.Assert(table != null);
-        return new Table(database, table);
+        var result = new Table(database, table);
+        openedTables.Add(result);
+        return result;
     }
 
-    readonly Table<TKey, TValue> OpenTableCore<TKey, TValue>(NullTerminatedUtf8String name)
+    Table<TKey, TValue> OpenTableCore<TKey, TValue>(NullTerminatedUtf8String name)
     {
         void* table;
 
@@ -110,10 +113,12 @@ public unsafe struct WriteTransaction : IDisposable
         }
 
         Debug.Assert(table != null);
-        return new Table<TKey, TValue>(database, table);
+        var result = new Table<TKey, TValue>(database, table);
+        openedTables.Add(result.inner);
+        return result;
     }
 
-    public readonly void DeleteTable(ReadOnlySpan<byte> utf8Name)
+    public void DeleteTable(ReadOnlySpan<byte> utf8Name)
     {
         ThrowIfDisposed();
 
@@ -121,7 +126,7 @@ public unsafe struct WriteTransaction : IDisposable
         DeleteTableCore(nameBuffer);
     }
 
-    public readonly void DeleteTable(ReadOnlySpan<char> name)
+    public void DeleteTable(ReadOnlySpan<char> name)
     {
         ThrowIfDisposed();
 
@@ -129,7 +134,7 @@ public unsafe struct WriteTransaction : IDisposable
         DeleteTableCore(nameBuffer);
     }
 
-    readonly void DeleteTableCore(NullTerminatedUtf8String name)
+    void DeleteTableCore(NullTerminatedUtf8String name)
     {
         fixed (byte* namePtr = name)
         {
@@ -141,7 +146,7 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
-    public readonly void RenameTable(ReadOnlySpan<byte> oldUtf8Name, ReadOnlySpan<byte> newUtf8Name)
+    public void RenameTable(ReadOnlySpan<byte> oldUtf8Name, ReadOnlySpan<byte> newUtf8Name)
     {
         ThrowIfDisposed();
 
@@ -150,7 +155,7 @@ public unsafe struct WriteTransaction : IDisposable
         RenameTableCore(oldNameBuffer, newNameBuffer);
     }
 
-    public readonly void RenameTable(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName)
+    public void RenameTable(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName)
     {
         ThrowIfDisposed();
 
@@ -159,7 +164,7 @@ public unsafe struct WriteTransaction : IDisposable
         RenameTableCore(oldNameBuffer, newNameBuffer);
     }
 
-    readonly void RenameTableCore(NullTerminatedUtf8String oldName, NullTerminatedUtf8String newName)
+    void RenameTableCore(NullTerminatedUtf8String oldName, NullTerminatedUtf8String newName)
     {
         fixed (byte* oldNamePtr = oldName)
         fixed (byte* newNamePtr = newName)
@@ -176,6 +181,7 @@ public unsafe struct WriteTransaction : IDisposable
     {
         ThrowIfDisposed();
 
+        DisposeTables();
         var code = NativeMethods.redb_write_tx_commit(tx);
         if (code != 0)
         {
@@ -184,7 +190,7 @@ public unsafe struct WriteTransaction : IDisposable
         tx = null;
     }
 
-    public readonly ulong PersistentSavepoint()
+    public ulong PersistentSavepoint()
     {
         ThrowIfDisposed();
 
@@ -198,7 +204,7 @@ public unsafe struct WriteTransaction : IDisposable
         return id;
     }
 
-    public readonly Savepoint GetPersistentSavepoint(ulong id)
+    public Savepoint GetPersistentSavepoint(ulong id)
     {
         ThrowIfDisposed();
 
@@ -213,7 +219,7 @@ public unsafe struct WriteTransaction : IDisposable
         return new Savepoint(savepoint);
     }
 
-    public readonly bool DeletePersistentSavepoint(ulong id)
+    public bool DeletePersistentSavepoint(ulong id)
     {
         ThrowIfDisposed();
 
@@ -227,7 +233,7 @@ public unsafe struct WriteTransaction : IDisposable
         return success;
     }
 
-    public readonly ulong[] ListPersistentSavepoints()
+    public ulong[] ListPersistentSavepoints()
     {
         ThrowIfDisposed();
 
@@ -250,7 +256,7 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
-    public readonly Savepoint EphemeralSavepoint()
+    public Savepoint EphemeralSavepoint()
     {
         ThrowIfDisposed();
 
@@ -265,7 +271,7 @@ public unsafe struct WriteTransaction : IDisposable
         return new Savepoint(savepoint);
     }
 
-    public readonly void RestoreSavepoint(Savepoint savepoint)
+    public void RestoreSavepoint(Savepoint savepoint)
     {
         ThrowIfDisposed();
 
@@ -280,6 +286,8 @@ public unsafe struct WriteTransaction : IDisposable
     {
         if (tx != null)
         {
+            DisposeTables();
+
             var code = NativeMethods.redb_write_tx_abort(tx);
             if (code != 0)
             {
@@ -289,8 +297,17 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
+    void DisposeTables()
+    {
+        for (int i = 0; i < openedTables.Count; i++)
+        {
+            openedTables[i].Dispose();
+        }
+        openedTables.Dispose();
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    readonly void ThrowIfDisposed()
+    void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(tx == null, nameof(WriteTransaction));
     }
