@@ -7,28 +7,31 @@ try
         .WithJsonSerializer();
     db.Compact();
 
-    using (var writetx = db.BeginWrite())
+    using (var tx = db.BeginWrite())
     {
-        using (var table = writetx.OpenTable<string, Person>("persons"))
-        {
-            table.Insert("alice", new Person("Alice", 18));
-            table.Insert("bob", new Person("Bob", 30));
-            table.Insert("carol", new Person("Carol", 25));
-            table.Insert("dave", new Person("Dave", 40));
-            table.Insert("eve", new Person("Eve", 22));
-        }
+        var table = tx.OpenTable<string, Person>("persons");
 
-        writetx.Commit();
+        table.Insert("alice", new Person("Alice", 18));
+        table.Insert("bob", new Person("Bob", 30));
+        table.Insert("carol", new Person("Carol", 25));
+        table.Insert("dave", new Person("Dave", 40));
+        table.Insert("eve", new Person("Eve", 22));
+
+        tx.Commit();
     }
 
-    using (var readtx = db.BeginRead())
+    using (var tx = db.BeginRead())
     {
-        using (var table = readtx.OpenTable<string, Person>("persons"))
+        var table = tx.OpenTable<string, Person>("persons");
+
+        foreach (var kv in table)
         {
-            foreach (var kv in table.GetRange("alice", "bob"))
-            {
-                Console.WriteLine($"{kv.Key}: {kv.Value}");
-            }
+            Console.WriteLine($"{kv.Key}: {kv.Value}");
+        }
+
+        foreach (var kv in table.GetRange("alice", "carol"))
+        {
+            Console.WriteLine($"{kv.Key}: {kv.Value}");
         }
     }
 }

@@ -3,10 +3,11 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Redb.Internal;
 
 namespace Redb;
 
-public unsafe struct ReadOnlyTable : IDisposable
+public unsafe sealed class ReadOnlyTable : IDisposable
 {
     internal RedbDatabase database;
     void* table;
@@ -27,7 +28,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly RedbBlob Get(ReadOnlySpan<byte> key)
+    public RedbBlob Get(ReadOnlySpan<byte> key)
     {
         if (!TryGet(key, out var value))
         {
@@ -37,7 +38,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly bool TryGet(ReadOnlySpan<byte> key, [NotNullWhen(true)] out RedbBlob? blob)
+    public bool TryGet(ReadOnlySpan<byte> key, out RedbBlob blob)
     {
         ThrowIfDisposed();
 
@@ -59,7 +60,7 @@ public unsafe struct ReadOnlyTable : IDisposable
         }
     }
 
-    public readonly Enumerator GetEnumerator()
+    public Enumerator GetEnumerator()
     {
         ThrowIfDisposed();
 
@@ -70,7 +71,7 @@ public unsafe struct ReadOnlyTable : IDisposable
         return new Enumerator(iter);
     }
 
-    public readonly RangeEnumerable GetRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey)
+    public RangeEnumerable GetRange(ReadOnlySpan<byte> startKey, ReadOnlySpan<byte> endKey)
     {
         ThrowIfDisposed();
 
@@ -87,7 +88,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    readonly void ThrowIfDisposed()
+    void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(table == null, nameof(ReadOnlyTable));
     }
@@ -103,24 +104,38 @@ public unsafe struct ReadOnlyTable : IDisposable
 
         public Enumerator GetEnumerator()
         {
-            return new Enumerator(iter);
+            if (iter == null)
+            {
+                throw new InvalidOperationException("The range enumerable has already been enumerated.");
+            }
+
+            var e = new Enumerator(iter);
+            iter = null;
+            return e;
         }
     }
 
-    public ref struct Enumerator : IDisposable
+    public ref struct Enumerator
     {
         void* iter;
-        KeyValuePair<RedbBlob, RedbBlob> current;
+        RedbBlob keyBlob;
+        RedbBlob valueBlob;
+
+        ReadOnlySpanKeyValuePair current;
 
         internal Enumerator(void* iter)
         {
             this.iter = iter;
         }
 
-        public KeyValuePair<RedbBlob, RedbBlob> Current => current;
+        public ReadOnlySpanKeyValuePair Current => current;
 
         public bool MoveNext()
         {
+            // dispose prev key/value blobs
+            keyBlob.Dispose();
+            valueBlob.Dispose();
+
             if (iter == null) return false;
 
             byte* keyPtr;
@@ -131,10 +146,15 @@ public unsafe struct ReadOnlyTable : IDisposable
             var code = NativeMethods.redb_iter_next(iter, &keyPtr, &keyLen, &valuePtr, &valueLen);
             if (code == NativeMethods.REDB_OK)
             {
-                current = new KeyValuePair<RedbBlob, RedbBlob>(
-                    new RedbBlob(keyPtr, keyLen),
-                    new RedbBlob(valuePtr, valueLen)
-                );
+                keyBlob = new RedbBlob(keyPtr, keyLen);
+                valueBlob = new RedbBlob(valuePtr, valueLen);
+
+                current = new ReadOnlySpanKeyValuePair
+                {
+                    Key = keyBlob.AsSpan(),
+                    Value = valueBlob.AsSpan(),
+                };
+
                 return true;
             }
             else
@@ -147,6 +167,9 @@ public unsafe struct ReadOnlyTable : IDisposable
         {
             if (iter != null)
             {
+                keyBlob.Dispose();
+                valueBlob.Dispose();
+
                 NativeMethods.redb_free_iter(iter);
                 iter = null;
             }
@@ -154,9 +177,9 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 }
 
-public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
+public unsafe sealed class ReadOnlyTable<TKey, TValue> : IDisposable
 {
-    ReadOnlyTable inner;
+    internal readonly ReadOnlyTable inner;
 
     internal ReadOnlyTable(RedbDatabase database, void* table)
     {
@@ -168,7 +191,7 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         inner.Dispose();
     }
 
-    public readonly TValue Get(TKey key)
+    public TValue Get(TKey key)
     {
         if (!TryGet(key, out var value))
         {
@@ -177,7 +200,7 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         return value;
     }
 
-    public readonly bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value)
+    public bool TryGet(TKey key, [NotNullWhen(true)] out TValue? value)
     {
         var encoding = inner.database.Encoding;
 
@@ -210,12 +233,12 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         }
     }
 
-    public readonly Enumerator GetEnumerator()
+    public Enumerator GetEnumerator()
     {
         return new Enumerator(inner.GetEnumerator(), inner.database.Encoding);
     }
 
-    public readonly RangeEnumerable GetRange(TKey startKey, TKey endKey)
+    public RangeEnumerable GetRange(TKey startKey, TKey endKey)
     {
         var encoding = inner.database.Encoding;
         var startBuffer = ArrayPool<byte>.Shared.Rent(256);
@@ -285,14 +308,10 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         {
             if (inner.MoveNext())
             {
-                var kvp = inner.Current;
-                using (kvp.Key)
-                using (kvp.Value)
-                {
-                    var key = encoding.Decode<TKey>(kvp.Key.AsSpan());
-                    var value = encoding.Decode<TValue>(kvp.Value.AsSpan());
-                    current = new KeyValuePair<TKey, TValue>(key, value);
-                }
+                var kv = inner.Current;
+                var key = encoding.Decode<TKey>(kv.Key);
+                var value = encoding.Decode<TValue>(kv.Value);
+                current = new KeyValuePair<TKey, TValue>(key, value);
                 return true;
             }
             return false;

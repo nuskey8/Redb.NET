@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Text;
 
-namespace Redb;
+namespace Redb.Internal;
 
 internal struct NullTerminatedUtf8String : IDisposable
 {

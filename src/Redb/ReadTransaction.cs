@@ -1,11 +1,13 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Redb.Internal;
 
 namespace Redb;
 
-public unsafe struct ReadTransaction : IDisposable
+public unsafe sealed class ReadTransaction : IDisposable
 {
     readonly RedbDatabase database;
+    PooledList<ReadOnlyTable> openedTables = new(8);
     void* tx;
 
     internal ReadTransaction(RedbDatabase database, void* tx)
@@ -18,12 +20,18 @@ public unsafe struct ReadTransaction : IDisposable
     {
         if (tx != null)
         {
+            foreach (var table in openedTables.AsSpan())
+            {
+                table.Dispose();
+            }
+            openedTables.Dispose();
+
             NativeMethods.redb_free_read_transaction(tx);
             tx = null;
         }
     }
 
-    public readonly ulong Length
+    public ulong Length
     {
         get
         {
@@ -41,7 +49,7 @@ public unsafe struct ReadTransaction : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ReadOnlyTable OpenTable(ReadOnlySpan<byte> utf8Name)
+    public ReadOnlyTable OpenTable(ReadOnlySpan<byte> utf8Name)
     {
         ThrowIfDisposed();
 
@@ -50,7 +58,7 @@ public unsafe struct ReadTransaction : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ReadOnlyTable OpenTable(ReadOnlySpan<char> name)
+    public ReadOnlyTable OpenTable(ReadOnlySpan<char> name)
     {
         ThrowIfDisposed();
 
@@ -59,7 +67,7 @@ public unsafe struct ReadTransaction : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> utf8Name)
+    public ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> utf8Name)
     {
         ThrowIfDisposed();
 
@@ -68,7 +76,7 @@ public unsafe struct ReadTransaction : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
+    public ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
     {
         ThrowIfDisposed();
 
@@ -76,42 +84,48 @@ public unsafe struct ReadTransaction : IDisposable
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
 
-    readonly ReadOnlyTable OpenTableCore(NullTerminatedUtf8String name)
+    ReadOnlyTable OpenTableCore(NullTerminatedUtf8String name)
     {
-        void* table;
+        void* t;
 
         fixed (byte* namePtr = name)
         {
-            var code = NativeMethods.redb_read_tx_open_table(tx, namePtr, &table);
+            var code = NativeMethods.redb_read_tx_open_table(tx, namePtr, &t);
             if (code != NativeMethods.REDB_OK)
             {
                 throw new RedbDatabaseException("Failed to open table", code);
             }
         }
 
-        Debug.Assert(table != null);
-        return new ReadOnlyTable(database, table);
+        Debug.Assert(t != null);
+
+        var table = new ReadOnlyTable(database, t);
+        openedTables.Add(table);
+        return table;
     }
 
-    readonly ReadOnlyTable<TKey, TValue> OpenTableCore<TKey, TValue>(NullTerminatedUtf8String name)
+    ReadOnlyTable<TKey, TValue> OpenTableCore<TKey, TValue>(NullTerminatedUtf8String name)
     {
-        void* table;
+        void* t;
 
         fixed (byte* namePtr = name)
         {
-            var code = NativeMethods.redb_read_tx_open_table(tx, namePtr, &table);
+            var code = NativeMethods.redb_read_tx_open_table(tx, namePtr, &t);
             if (code != NativeMethods.REDB_OK)
             {
                 throw new RedbDatabaseException("Failed to open table", code);
             }
         }
 
-        Debug.Assert(table != null);
-        return new ReadOnlyTable<TKey, TValue>(database, table);
+        Debug.Assert(t != null);
+
+        var table = new ReadOnlyTable<TKey, TValue>(database, t);
+        openedTables.Add(table.inner);
+        return table;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    readonly void ThrowIfDisposed()
+    void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(tx == null, nameof(ReadTransaction));
     }

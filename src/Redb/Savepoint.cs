@@ -1,3 +1,5 @@
+using Redb.Internal;
+
 namespace Redb;
 
 public unsafe sealed class Savepoint : IDisposable
