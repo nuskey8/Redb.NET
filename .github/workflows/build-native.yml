@@ -17,10 +17,18 @@ jobs:
     name: Build Windows
     uses: ./.github/workflows/build-windows.yml
 
+  build-ios:
+    name: Build iOS
+    uses: ./.github/workflows/build-ios.yml
+
+  build-android:
+    name: Build Android
+    uses: ./.github/workflows/build-android.yml
+
   # Combine all artifacts and commit to repository
   combine-and-commit:
     name: Combine Artifacts and Commit
-    needs: [build-macos, build-linux, build-windows]
+    needs: [build-macos, build-linux, build-windows, build-ios, build-android]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -40,6 +48,9 @@ jobs:
           rm -rf src/Redb/runtimes/linux-*/native/*
           rm -rf src/Redb/runtimes/osx-*/native/*
           rm -rf src/Redb/runtimes/win-*/native/*
+
+          # Clear Unity plugin directories
+          rm -rf src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/*/libredb.*
 
           # Copy artifacts to appropriate runtime directories
           cd all-artifacts
@@ -63,13 +74,49 @@ jobs:
               else
                 cp -v "$dir"/* "../src/Redb/runtimes/$runtime/native/"
               fi
+
+              # Copy to Unity Plugins directory
+              case "$runtime" in
+                osx-x64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                osx-arm64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                linux-x64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                win-x64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.dll "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                android-arm64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                android-armv7)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                android-x86_64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+                ios-arm64)
+                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
+                  cp -v "$dir"/libredb.a "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  ;;
+              esac
             fi
           done
 
       - name: Check for changes
         id: check_changes
         run: |
-          if [[ -n $(git status --porcelain src/Redb/runtimes) ]]; then
+          if [[ -n $(git status --porcelain src/Redb/runtimes src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins) ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -80,17 +127,21 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/Redb/runtimes
+          git add src/Redb/runtimes src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins
           git commit -m "chore: update native libraries for all platforms [skip ci]"
           git push
 
       - name: Create combined artifact for download
         run: |
           mkdir -p combined-artifacts/runtimes
+          mkdir -p combined-artifacts/unity-plugins
           cp -r src/Redb/runtimes/* combined-artifacts/runtimes/
+          cp -r src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/* combined-artifacts/unity-plugins/ 2>/dev/null || true
 
       - name: Upload combined artifacts
         uses: actions/upload-artifact@v4
         with:
           name: native-libraries-all-platforms
-          path: combined-artifacts/runtimes/**/*
+          path: |
+            combined-artifacts/runtimes/**/*
+            combined-artifacts/unity-plugins/**/*
