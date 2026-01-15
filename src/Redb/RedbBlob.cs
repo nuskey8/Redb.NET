@@ -13,6 +13,11 @@ public unsafe struct RedbBlob : IDisposable
 
     public readonly ReadOnlySpan<byte> AsSpan()
     {
+        if (ptr == null)
+        {
+            throw new ObjectDisposedException(nameof(RedbBlob));
+        }
+
         return new ReadOnlySpan<byte>(ptr, (int)length);
     }
 

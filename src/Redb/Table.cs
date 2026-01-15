@@ -17,6 +17,8 @@ public unsafe struct Table : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly void Insert(ReadOnlySpan<byte> key, ReadOnlySpan<byte> value)
     {
+        ThrowIfDisposed();
+
         fixed (byte* keyPtr = key)
         fixed (byte* valuePtr = value)
         {
@@ -30,6 +32,14 @@ public unsafe struct Table : IDisposable
         if (code != 0)
         {
             throw new RedbDatabaseException("Failed to insert value to table.", code);
+        }
+    }
+
+    readonly void ThrowIfDisposed()
+    {
+        if (table == null)
+        {
+            throw new ObjectDisposedException(nameof(Table));
         }
     }
 

@@ -5,7 +5,7 @@ namespace Redb;
 
 public unsafe struct ReadTransaction : IDisposable
 {
-    RedbDatabase database;
+    readonly RedbDatabase database;
     void* tx;
 
     internal ReadTransaction(RedbDatabase database, void* tx)
@@ -27,6 +27,8 @@ public unsafe struct ReadTransaction : IDisposable
     {
         get
         {
+            ThrowIfDisposed();
+
             ulong length;
             var code = NativeMethods.redb_table_len(tx, &length);
             if (code != NativeMethods.REDB_OK)
@@ -41,6 +43,8 @@ public unsafe struct ReadTransaction : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ReadOnlyTable OpenTable(ReadOnlySpan<byte> utf8Name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(utf8Name);
         return OpenTableCore(nameBuffer);
     }
@@ -48,6 +52,8 @@ public unsafe struct ReadTransaction : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ReadOnlyTable OpenTable(ReadOnlySpan<char> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore(nameBuffer);
     }
@@ -55,6 +61,8 @@ public unsafe struct ReadTransaction : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> utf8Name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(utf8Name);
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
@@ -62,6 +70,8 @@ public unsafe struct ReadTransaction : IDisposable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public readonly ReadOnlyTable<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
@@ -98,5 +108,13 @@ public unsafe struct ReadTransaction : IDisposable
 
         Debug.Assert(table != null);
         return new ReadOnlyTable<TKey, TValue>(database, table);
+    }
+
+    readonly void ThrowIfDisposed()
+    {
+        if (tx == null)
+        {
+            throw new ObjectDisposedException(nameof(ReadTransaction));
+        }
     }
 }
