@@ -1,388 +1,96 @@
-name: Build Native Libraries
+name: Build All Native Libraries
 
 on:
-    workflow_dispatch:
+  workflow_dispatch:
 
 jobs:
-    # macOS builds
-    build-macos:
-        name: Build macOS (${{ matrix.arch }})
-        runs-on: ${{ matrix.os }}
-        strategy:
-            matrix:
-                include:
-                    - os: macos-14
-                      arch: arm64
-                      target: aarch64-apple-darwin
-                      output: libredb.dylib
-                      runtime: osx-arm64
-                    - os: macos-15-intel
-                      arch: x64
-                      target: x86_64-apple-darwin
-                      output: libredb.dylib
-                      runtime: osx-x64
+  # Call individual platform workflows
+  build-macos:
+    name: Build macOS
+    uses: ./.github/workflows/build-macos.yml
 
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
+  build-linux:
+    name: Build Linux
+    uses: ./.github/workflows/build-linux.yml
 
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.target }}
+  build-windows:
+    name: Build Windows
+    uses: ./.github/workflows/build-windows.yml
 
-            - name: Cache cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/registry
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+  # Combine all artifacts and commit to repository
+  combine-and-commit:
+    name: Combine Artifacts and Commit
+    needs: [build-macos, build-linux, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-            - name: Cache cargo index
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-            - name: Cache cargo build
-              uses: actions/cache@v4
-              with:
-                  path: native/redb-ffi/target
-                  key: ${{ runner.os }}-${{ matrix.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
 
-            - name: Build
-              working-directory: native/redb-ffi
-              run: cargo build --release --target ${{ matrix.target }}
+      - name: Organize artifacts into runtimes directory
+        run: |
+          # Clear existing runtime directories for linux, macos, and windows only
+          rm -rf src/Redb/runtimes/linux-*/native/*
+          rm -rf src/Redb/runtimes/osx-*/native/*
+          rm -rf src/Redb/runtimes/win-*/native/*
 
-            - name: Prepare artifact
-              run: |
-                  mkdir -p artifacts/${{ matrix.runtime }}/native
-                  cp native/redb-ffi/target/${{ matrix.target }}/release/${{ matrix.output }} artifacts/${{ matrix.runtime }}/native/
-
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-${{ matrix.runtime }}
-                  path: artifacts/${{ matrix.runtime }}/native/${{ matrix.output }}
-
-    # iOS builds
-    build-ios:
-        name: Build iOS (${{ matrix.arch }})
-        runs-on: macos-14
-        strategy:
-            matrix:
-                include:
-                    - arch: arm64
-                      target: aarch64-apple-ios
-                      runtime: ios-arm64
-                    - arch: arm64-sim
-                      target: aarch64-apple-ios-sim
-                      runtime: ios-arm64-simulator
-                    - arch: x64-sim
-                      target: x86_64-apple-ios
-                      runtime: ios-x64-simulator
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.target }}
-
-            - name: Cache cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/registry
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo index
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo build
-              uses: actions/cache@v4
-              with:
-                  path: native/redb-ffi/target
-                  key: ios-${{ matrix.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Build
-              working-directory: native/redb-ffi
-              run: cargo build --release --target ${{ matrix.target }}
-
-            - name: Prepare artifact
-              run: |
-                  mkdir -p artifacts/${{ matrix.runtime }}/native
-                  cp native/redb-ffi/target/${{ matrix.target }}/release/libredb.dylib artifacts/${{ matrix.runtime }}/native/ || \
-                  cp native/redb-ffi/target/${{ matrix.target }}/release/libredb.a artifacts/${{ matrix.runtime }}/native/
-
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-${{ matrix.runtime }}
-                  path: artifacts/${{ matrix.runtime }}/native/*
-
-    # Linux builds
-    build-linux:
-        name: Build Linux (${{ matrix.arch }})
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                include:
-                    - arch: x64
-                      target: x86_64-unknown-linux-gnu
-                      output: libredb.so
-                      runtime: linux-x64
-                    - arch: arm64
-                      target: aarch64-unknown-linux-gnu
-                      output: libredb.so
-                      runtime: linux-arm64
-                    - arch: arm
-                      target: armv7-unknown-linux-gnueabihf
-                      output: libredb.so
-                      runtime: linux-arm
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.target }}
-
-            - name: Install cross-compilation tools
-              if: matrix.arch != 'x64'
-              run: |
-                  sudo apt-get update
-                  if [ "${{ matrix.arch }}" = "arm64" ]; then
-                    sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-                  elif [ "${{ matrix.arch }}" = "arm" ]; then
-                    sudo apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+          # Copy artifacts to appropriate runtime directories
+          cd all-artifacts
+          for dir in native-*; do
+            if [ -d "$dir" ]; then
+              runtime="${dir#native-}"
+              
+              echo "Processing $runtime..."
+              mkdir -p "../src/Redb/runtimes/$runtime/native"
+              
+              # Rename redb.dll to libredb.dll for Windows
+              if [[ "$runtime" =~ ^win- ]]; then
+                for file in "$dir"/*; do
+                  filename=$(basename "$file")
+                  if [[ "$filename" == "redb.dll" ]]; then
+                    cp -v "$file" "../src/Redb/runtimes/$runtime/native/libredb.dll"
+                  else
+                    cp -v "$file" "../src/Redb/runtimes/$runtime/native/"
                   fi
+                done
+              else
+                cp -v "$dir"/* "../src/Redb/runtimes/$runtime/native/"
+              fi
+            fi
+          done
 
-            - name: Cache cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/registry
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if [[ -n $(git status --porcelain src/Redb/runtimes) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
 
-            - name: Cache cargo index
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/Redb/runtimes
+          git commit -m "chore: update native libraries for all platforms [skip ci]"
+          git push
 
-            - name: Cache cargo build
-              uses: actions/cache@v4
-              with:
-                  path: native/redb-ffi/target
-                  key: ${{ runner.os }}-${{ matrix.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Create combined artifact for download
+        run: |
+          mkdir -p combined-artifacts/runtimes
+          cp -r src/Redb/runtimes/* combined-artifacts/runtimes/
 
-            - name: Configure linker
-              if: matrix.arch != 'x64'
-              run: |
-                  mkdir -p .cargo
-                  if [ "${{ matrix.arch }}" = "arm64" ]; then
-                    cat >> .cargo/config.toml << EOF
-                  [target.aarch64-unknown-linux-gnu]
-                  linker = "aarch64-linux-gnu-gcc"
-                  EOF
-                  elif [ "${{ matrix.arch }}" = "arm" ]; then
-                    cat >> .cargo/config.toml << EOF
-                  [target.armv7-unknown-linux-gnueabihf]
-                  linker = "arm-linux-gnueabihf-gcc"
-                  EOF
-                  fi
-              working-directory: native/redb-ffi
-
-            - name: Build
-              working-directory: native/redb-ffi
-              run: cargo build --release --target ${{ matrix.target }}
-
-            - name: Prepare artifact
-              run: |
-                  mkdir -p artifacts/${{ matrix.runtime }}/native
-                  cp native/redb-ffi/target/${{ matrix.target }}/release/${{ matrix.output }} artifacts/${{ matrix.runtime }}/native/
-
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-${{ matrix.runtime }}
-                  path: artifacts/${{ matrix.runtime }}/native/${{ matrix.output }}
-
-    # Android builds
-    build-android:
-        name: Build Android (${{ matrix.arch }})
-        runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                include:
-                    - arch: arm64-v8a
-                      target: aarch64-linux-android
-                      runtime: android-arm64
-                    - arch: armeabi-v7a
-                      target: armv7-linux-androideabi
-                      runtime: android-arm
-                    - arch: x86_64
-                      target: x86_64-linux-android
-                      runtime: android-x64
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.target }}
-
-            - name: Setup Android NDK
-              uses: nttld/setup-ndk@v1
-              id: setup-ndk
-              with:
-                  ndk-version: r26d
-                  add-to-path: false
-
-            - name: Cache cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/registry
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo index
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo build
-              uses: actions/cache@v4
-              with:
-                  path: native/redb-ffi/target
-                  key: android-${{ matrix.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Configure cargo for Android
-              run: |
-                  mkdir -p .cargo
-                  cat >> .cargo/config.toml << EOF
-                  [target.aarch64-linux-android]
-                  ar = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-                  linker = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android30-clang"
-
-                  [target.armv7-linux-androideabi]
-                  ar = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-                  linker = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi30-clang"
-
-                  [target.x86_64-linux-android]
-                  ar = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-                  linker = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android30-clang"
-                  EOF
-              working-directory: native/redb-ffi
-
-            - name: Build
-              working-directory: native/redb-ffi
-              run: cargo build --release --target ${{ matrix.target }}
-
-            - name: Prepare artifact
-              run: |
-                  mkdir -p artifacts/${{ matrix.runtime }}/native
-                  cp native/redb-ffi/target/${{ matrix.target }}/release/libredb.so artifacts/${{ matrix.runtime }}/native/
-
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-${{ matrix.runtime }}
-                  path: artifacts/${{ matrix.runtime }}/native/libredb.so
-
-    # Windows builds
-    build-windows:
-        name: Build Windows (${{ matrix.arch }})
-        runs-on: windows-latest
-        strategy:
-            matrix:
-                include:
-                    - arch: x64
-                      target: x86_64-pc-windows-msvc
-                      output: redb.dll
-                      runtime: win-x64
-                    - arch: arm64
-                      target: aarch64-pc-windows-msvc
-                      output: redb.dll
-                      runtime: win-arm64
-
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v4
-
-            - name: Setup Rust
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                  targets: ${{ matrix.target }}
-
-            - name: Cache cargo registry
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/registry
-                  key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo index
-              uses: actions/cache@v4
-              with:
-                  path: ~/.cargo/git
-                  key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Cache cargo build
-              uses: actions/cache@v4
-              with:
-                  path: native/redb-ffi/target
-                  key: ${{ runner.os }}-${{ matrix.arch }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-            - name: Build
-              working-directory: native/redb-ffi
-              run: cargo build --release --target ${{ matrix.target }}
-
-            - name: Prepare artifact
-              shell: pwsh
-              run: |
-                  New-Item -ItemType Directory -Force -Path artifacts/${{ matrix.runtime }}/native
-                  Copy-Item native/redb-ffi/target/${{ matrix.target }}/release/${{ matrix.output }} artifacts/${{ matrix.runtime }}/native/
-
-            - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-${{ matrix.runtime }}
-                  path: artifacts/${{ matrix.runtime }}/native/${{ matrix.output }}
-
-    # Combine all artifacts
-    combine-artifacts:
-        name: Combine All Artifacts
-        needs:
-            [build-macos, build-ios, build-linux, build-android, build-windows]
-        runs-on: ubuntu-latest
-
-        steps:
-            - name: Download all artifacts
-              uses: actions/download-artifact@v4
-              with:
-                  path: all-artifacts
-
-            - name: Organize artifacts
-              run: |
-                  mkdir -p combined-artifacts/runtimes
-                  cd all-artifacts
-                  for dir in native-*; do
-                    if [ -d "$dir" ]; then
-                      runtime="${dir#native-}"
-                      mkdir -p "../combined-artifacts/runtimes/$runtime"
-                      cp -r "$dir"/* "../combined-artifacts/runtimes/$runtime/"
-                    fi
-                  done
-
-            - name: Upload combined artifacts
-              uses: actions/upload-artifact@v4
-              with:
-                  name: native-libraries-all-platforms
-                  path: combined-artifacts/runtimes/**/*
+      - name: Upload combined artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-libraries-all-platforms
+          path: combined-artifacts/runtimes/**/*
