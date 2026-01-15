@@ -37,7 +37,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly bool TryGet(ReadOnlySpan<byte> key, [NotNullWhen(true)] out RedbBlob? blob)
+    public readonly bool TryGet(ReadOnlySpan<byte> key, out RedbBlob blob)
     {
         ThrowIfDisposed();
 
@@ -110,14 +110,14 @@ public unsafe struct ReadOnlyTable : IDisposable
     public ref struct Enumerator : IDisposable
     {
         void* iter;
-        KeyValuePair<RedbBlob, RedbBlob> current;
+        RedbBlobKeyValuePair current;
 
         internal Enumerator(void* iter)
         {
             this.iter = iter;
         }
 
-        public KeyValuePair<RedbBlob, RedbBlob> Current => current;
+        public RedbBlobKeyValuePair Current => current;
 
         public bool MoveNext()
         {
@@ -131,10 +131,11 @@ public unsafe struct ReadOnlyTable : IDisposable
             var code = NativeMethods.redb_iter_next(iter, &keyPtr, &keyLen, &valuePtr, &valueLen);
             if (code == NativeMethods.REDB_OK)
             {
-                current = new KeyValuePair<RedbBlob, RedbBlob>(
-                    new RedbBlob(keyPtr, keyLen),
-                    new RedbBlob(valuePtr, valueLen)
-                );
+                current = new RedbBlobKeyValuePair
+                {
+                    Key = new RedbBlob(keyPtr, keyLen),
+                    Value = new RedbBlob(valuePtr, valueLen),
+                };
                 return true;
             }
             else
@@ -285,14 +286,10 @@ public unsafe struct ReadOnlyTable<TKey, TValue> : IDisposable
         {
             if (inner.MoveNext())
             {
-                var kvp = inner.Current;
-                using (kvp.Key)
-                using (kvp.Value)
-                {
-                    var key = encoding.Decode<TKey>(kvp.Key.AsSpan());
-                    var value = encoding.Decode<TValue>(kvp.Value.AsSpan());
-                    current = new KeyValuePair<TKey, TValue>(key, value);
-                }
+                using var kv = inner.Current;
+                var key = encoding.Decode<TKey>(kv.Key.AsSpan());
+                var value = encoding.Decode<TValue>(kv.Value.AsSpan());
+                current = new KeyValuePair<TKey, TValue>(key, value);
                 return true;
             }
             return false;

@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Redb;
 
-public unsafe class RedbBlob : IDisposable
+public unsafe struct RedbBlob : IDisposable
 {
     byte* ptr;
     nuint length;
@@ -16,22 +16,10 @@ public unsafe class RedbBlob : IDisposable
     public ReadOnlySpan<byte> AsSpan()
     {
         ThrowIfDisposed();
-
         return new ReadOnlySpan<byte>(ptr, (int)length);
     }
 
     public void Dispose()
-    {
-        DisposeCore();
-        GC.SuppressFinalize(this);
-    }
-
-    ~RedbBlob()
-    {
-        DisposeCore();
-    }
-
-    void DisposeCore()
     {
         if (ptr != null)
         {
@@ -41,8 +29,20 @@ public unsafe class RedbBlob : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void ThrowIfDisposed()
+    readonly void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(ptr == null, nameof(RedbBlob));
+    }
+}
+
+public struct RedbBlobKeyValuePair : IDisposable
+{
+    public RedbBlob Key;
+    public RedbBlob Value;
+
+    public void Dispose()
+    {
+        Key.Dispose();
+        Value.Dispose();
     }
 }
