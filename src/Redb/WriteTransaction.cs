@@ -184,6 +184,7 @@ public unsafe struct WriteTransaction : IDisposable
             throw new RedbDatabaseException("Failed to get persistent savepoint", code);
         }
 
+        Debug.Assert(savepoint != null);
         return new Savepoint(savepoint);
     }
 
@@ -235,6 +236,7 @@ public unsafe struct WriteTransaction : IDisposable
             throw new RedbDatabaseException("Failed to create ephemeral savepoint", code);
         }
 
+        Debug.Assert(savepoint != null);
         return new Savepoint(savepoint);
     }
 
