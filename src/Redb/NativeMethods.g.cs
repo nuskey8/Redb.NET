@@ -131,6 +131,18 @@ namespace Redb
         [DllImport(__DllName, EntryPoint = "redb_table_len", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern int redb_table_len(void* table, ulong* @out);
 
+        [DllImport(__DllName, EntryPoint = "redb_iter", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_iter(void* table, void** @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_range", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_range(void* table, byte* start_key, nuint start_key_len, byte* end_key, nuint end_key_len, void** @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_iter_next", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_iter_next(void* iter, byte** key_blob, nuint* key_len, byte** value_blob, nuint* value_len);
+
+        [DllImport(__DllName, EntryPoint = "redb_free_iter", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void redb_free_iter(void* iter);
+
 
     }
 

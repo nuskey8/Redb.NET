@@ -1,4 +1,6 @@
-use redb::{ReadableDatabase, ReadableTableMetadata, TableDefinition, backends::FileBackend};
+use redb::{
+    ReadableDatabase, ReadableTable, ReadableTableMetadata, TableDefinition, backends::FileBackend,
+};
 use std::{
     ffi::{c_char, c_void},
     fs::OpenOptions,
@@ -698,5 +700,187 @@ pub extern "C" fn redb_table_len(table: *mut c_void, out: *mut u64) -> i32 {
             REDB_OK
         }
         Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+type RangeIter<'a> = Box<
+    dyn Iterator<
+            Item = Result<
+                (
+                    redb::AccessGuard<'a, &'static [u8]>,
+                    redb::AccessGuard<'a, &'static [u8]>,
+                ),
+                redb::StorageError,
+            >,
+        > + 'a,
+>;
+
+pub struct RedbIterator {
+    inner: *mut c_void,
+    next_fn: unsafe extern "C" fn(
+        *mut c_void,
+        *mut *mut u8,
+        *mut usize,
+        *mut *mut u8,
+        *mut usize,
+    ) -> i32,
+}
+
+unsafe impl Send for RedbIterator {}
+
+unsafe extern "C" fn redb_iter_next_impl(
+    iter_ptr: *mut c_void,
+    key_blob: *mut *mut u8,
+    key_len: *mut usize,
+    value_blob: *mut *mut u8,
+    value_len: *mut usize,
+) -> i32 {
+    type IterType<'a> = Box<
+        dyn Iterator<
+                Item = Result<
+                    (
+                        redb::AccessGuard<'a, &'static [u8]>,
+                        redb::AccessGuard<'a, &'static [u8]>,
+                    ),
+                    redb::StorageError,
+                >,
+            > + 'a,
+    >;
+
+    unsafe {
+        let iter = &mut *(iter_ptr as *mut IterType);
+
+        match iter.next() {
+            Some(Ok((key, value))) => {
+                let key_slice = key.value();
+                let value_slice = value.value();
+
+                *key_blob = Box::into_raw(key_slice.to_vec().into_boxed_slice()) as *mut u8;
+                *key_len = key_slice.len();
+                *value_blob = Box::into_raw(value_slice.to_vec().into_boxed_slice()) as *mut u8;
+                *value_len = value_slice.len();
+
+                REDB_OK
+            }
+            Some(Err(_)) => REDB_ERROR_STORAGE_ERROR,
+            None => REDB_ERROR_KEY_NOT_FOUND, // End of iterator
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_iter(table: *mut c_void, out: *mut *mut c_void) -> i32 {
+    let table = unsafe {
+        assert!(!table.is_null());
+        &*table.cast::<redb::ReadOnlyTable<&'static [u8], &'static [u8]>>()
+    };
+
+    match table.iter() {
+        Ok(iter) => {
+            let boxed_iter: RangeIter = Box::new(iter);
+            let iter_handle = RedbIterator {
+                inner: Box::into_raw(Box::new(boxed_iter)) as *mut c_void,
+                next_fn: redb_iter_next_impl,
+            };
+
+            unsafe {
+                *out = Box::into_raw(Box::new(iter_handle)) as *mut c_void;
+            }
+            REDB_OK
+        }
+        Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_range(
+    table: *mut c_void,
+    start_key: *const u8,
+    start_key_len: usize,
+    end_key: *const u8,
+    end_key_len: usize,
+    out: *mut *mut c_void,
+) -> i32 {
+    let table = unsafe {
+        assert!(!table.is_null());
+        &*table.cast::<redb::ReadOnlyTable<&'static [u8], &'static [u8]>>()
+    };
+
+    let start = if !start_key.is_null() && start_key_len > 0 {
+        let slice = unsafe { std::slice::from_raw_parts(start_key, start_key_len) };
+        Some(slice.to_vec())
+    } else {
+        None
+    };
+
+    let end = if !end_key.is_null() && end_key_len > 0 {
+        let slice = unsafe { std::slice::from_raw_parts(end_key, end_key_len) };
+        Some(slice.to_vec())
+    } else {
+        None
+    };
+
+    let range_iter = match (&start, &end) {
+        (Some(s), Some(e)) => {
+            let s_slice: &[u8] = s.as_slice();
+            let e_slice: &[u8] = e.as_slice();
+            table.range::<&[u8]>(s_slice..e_slice)
+        }
+        (Some(s), None) => {
+            let s_slice: &[u8] = s.as_slice();
+            table.range::<&[u8]>(s_slice..)
+        }
+        (None, Some(e)) => {
+            let e_slice: &[u8] = e.as_slice();
+            table.range::<&[u8]>(..e_slice)
+        }
+        (None, None) => table.range::<&[u8]>(..),
+    };
+
+    match range_iter {
+        Ok(iter) => {
+            let boxed_iter: RangeIter = Box::new(iter);
+            let iter_handle = RedbIterator {
+                inner: Box::into_raw(Box::new(boxed_iter)) as *mut c_void,
+                next_fn: redb_iter_next_impl,
+            };
+
+            unsafe {
+                *out = Box::into_raw(Box::new(iter_handle)) as *mut c_void;
+            }
+            REDB_OK
+        }
+        Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_iter_next(
+    iter: *mut c_void,
+    key_blob: *mut *mut u8,
+    key_len: *mut usize,
+    value_blob: *mut *mut u8,
+    value_len: *mut usize,
+) -> i32 {
+    let iter_handle = unsafe {
+        assert!(!iter.is_null());
+        &mut *iter.cast::<RedbIterator>()
+    };
+
+    unsafe { (iter_handle.next_fn)(iter_handle.inner, key_blob, key_len, value_blob, value_len) }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_free_iter(iter: *mut c_void) {
+    if iter.is_null() {
+        return;
+    }
+
+    unsafe {
+        let iter = iter as *mut RedbIterator;
+        if !(*iter).inner.is_null() {
+            drop(Box::from_raw((*iter).inner as *mut RangeIter));
+        }
+        drop(Box::from_raw(iter));
     }
 }

@@ -9,15 +9,13 @@ try
 
     using (var writetx = db.BeginWrite())
     {
-        using (var table = writetx.OpenTable<string, int>("my_table"))
-        {
-            table.Insert("foo", 12);
-        }
-
         using (var table = writetx.OpenTable<string, Person>("persons"))
         {
             table.Insert("alice", new Person("Alice", 18));
             table.Insert("bob", new Person("Bob", 30));
+            table.Insert("carol", new Person("Carol", 25));
+            table.Insert("dave", new Person("Dave", 40));
+            table.Insert("eve", new Person("Eve", 22));
         }
 
         writetx.Commit();
@@ -25,18 +23,12 @@ try
 
     using (var readtx = db.BeginRead())
     {
-        using (var table = readtx.OpenTable<string, int>("my_table"))
-        {
-            var value = table.Get("foo");
-            Console.WriteLine($"foo: {value}");
-        }
-
         using (var table = readtx.OpenTable<string, Person>("persons"))
         {
-            var alice = table.Get("alice");
-            var bob = table.Get("bob");
-            Console.WriteLine(alice);
-            Console.WriteLine(bob);
+            foreach (var kv in table.GetRange("alice", "bob"))
+            {
+                Console.WriteLine($"{kv.Key}: {kv.Value}");
+            }
         }
     }
 }

@@ -23,15 +23,7 @@ public unsafe struct Table : IDisposable
         fixed (byte* valuePtr = value)
         {
             var code = NativeMethods.redb_insert(table, keyPtr, (nuint)key.Length, valuePtr, (nuint)value.Length);
-            ThrowIfError(code);
-        }
-    }
-
-    static void ThrowIfError(int code)
-    {
-        if (code != 0)
-        {
-            throw new RedbDatabaseException("Failed to insert value to table.", code);
+            ThrowHelper.ThrowIfError(code, "Failed to insert value to table.");
         }
     }
 
