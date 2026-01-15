@@ -1,4 +1,4 @@
-name: Build All Native Libraries
+name: Update Native Libraries
 
 on:
   workflow_dispatch:
