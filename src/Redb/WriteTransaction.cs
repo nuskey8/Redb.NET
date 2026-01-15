@@ -159,6 +159,95 @@ public unsafe struct WriteTransaction : IDisposable
         tx = null;
     }
 
+    public readonly ulong PersistentSavepoint()
+    {
+        ThrowIfDisposed();
+
+        ulong id;
+        var code = NativeMethods.redb_write_tx_persistent_savepoint(tx, &id);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to persistent savepoint", code);
+        }
+
+        return id;
+    }
+
+    public readonly Savepoint GetPersistentSavepoint(ulong id)
+    {
+        ThrowIfDisposed();
+
+        void* savepoint;
+        var code = NativeMethods.redb_write_tx_get_persistent_savepoint(tx, id, &savepoint);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to get persistent savepoint", code);
+        }
+
+        return new Savepoint(savepoint);
+    }
+
+    public readonly bool DeletePersistentSavepoint(ulong id)
+    {
+        ThrowIfDisposed();
+
+        bool success;
+        var code = NativeMethods.redb_write_tx_delete_persistent_savepoint(tx, id, &success);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to delete persistent savepoint", code);
+        }
+
+        return success;
+    }
+
+    public readonly ulong[] ListPersistentSavepoints()
+    {
+        ThrowIfDisposed();
+
+        ulong* idsPtr;
+        nuint count;
+        var code = NativeMethods.redb_write_tx_lists_persistent_savepoint(tx, &idsPtr, &count);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to list persistent savepoints", code);
+        }
+
+        try
+        {
+            var idsSpan = new ReadOnlySpan<ulong>(idsPtr, (int)count);
+            return idsSpan.ToArray();
+        }
+        finally
+        {
+            NativeMethods.redb_free(idsPtr);
+        }
+    }
+
+    public readonly Savepoint EphemeralSavepoint()
+    {
+        ThrowIfDisposed();
+
+        void* savepoint;
+        var code = NativeMethods.redb_write_tx_ephemeral_savepoint(tx, &savepoint);
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to create ephemeral savepoint", code);
+        }
+
+        return new Savepoint(savepoint);
+    }
+
+    public readonly void RestoreSavepoint(Savepoint savepoint)
+    {
+        ThrowIfDisposed();
+
+        var code = NativeMethods.redb_write_tx_restore_savepoint(tx, savepoint.AsPtr());
+        if (code != 0)
+        {
+            throw new RedbDatabaseException("Failed to restore to savepoint", code);
+        }
+    }
 
     public void Dispose()
     {
@@ -170,6 +259,14 @@ public unsafe struct WriteTransaction : IDisposable
                 throw new RedbDatabaseException("Failed to abort transaction", code);
             }
             tx = null;
+        }
+    }
+
+    readonly void ThrowIfDisposed()
+    {
+        if (tx == null)
+        {
+            throw new ObjectDisposedException(nameof(WriteTransaction));
         }
     }
 }
