@@ -11,11 +11,7 @@ public unsafe sealed class Savepoint : IDisposable
 
     internal void* AsPtr()
     {
-        if (ptr == null)
-        {
-            throw new ObjectDisposedException(nameof(Savepoint));
-        }
-
+        ThrowHelper.ThrowIfDisposed(ptr == null, nameof(Savepoint));
         return ptr;
     }
 

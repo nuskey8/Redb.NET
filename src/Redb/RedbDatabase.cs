@@ -78,6 +78,8 @@ public unsafe sealed class RedbDatabase : IDisposable
 
     public void Compact()
     {
+        ThrowIfDisposed();
+
         int code = NativeMethods.redb_compact_database(db);
         if (code != 0)
         {
@@ -87,6 +89,8 @@ public unsafe sealed class RedbDatabase : IDisposable
 
     public WriteTransaction BeginWrite()
     {
+        ThrowIfDisposed();
+
         void* tx;
 
         var code = NativeMethods.redb_begin_write(db, &tx);
@@ -101,6 +105,8 @@ public unsafe sealed class RedbDatabase : IDisposable
 
     public ReadTransaction BeginRead()
     {
+        ThrowIfDisposed();
+
         void* tx;
 
         var code = NativeMethods.redb_begin_read(db, &tx);
@@ -120,5 +126,11 @@ public unsafe sealed class RedbDatabase : IDisposable
             NativeMethods.redb_free_database(db);
             db = null;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void ThrowIfDisposed()
+    {
+        ThrowHelper.ThrowIfDisposed(db == null, nameof(RedbDatabase));
     }
 }

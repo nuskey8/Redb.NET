@@ -1,10 +1,11 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Redb;
 
 public unsafe struct WriteTransaction : IDisposable
 {
-    RedbDatabase database;
+    readonly RedbDatabase database;
     void* tx;
 
     internal WriteTransaction(RedbDatabase database, void* tx)
@@ -15,6 +16,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void SetDurability(RedbDurability durability)
     {
+        ThrowIfDisposed();
+
         var code = NativeMethods.redb_write_tx_set_durability(tx, (redb_durability)durability);
         if (code != 0)
         {
@@ -24,6 +27,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void SetTwoPhaseCommit(bool enable)
     {
+        ThrowIfDisposed();
+
         var code = NativeMethods.redb_write_tx_set_two_phase_commit(tx, enable);
         if (code != 0)
         {
@@ -33,6 +38,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void SetQuickRepair(bool enable)
     {
+        ThrowIfDisposed();
+
         var code = NativeMethods.redb_write_tx_set_quick_repair(tx, enable);
         if (code != 0)
         {
@@ -42,24 +49,32 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly Table OpenTable(ReadOnlySpan<byte> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore(nameBuffer);
     }
 
     public readonly Table OpenTable(ReadOnlySpan<char> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore(nameBuffer);
     }
 
     public readonly Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<byte> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
 
     public readonly Table<TKey, TValue> OpenTable<TKey, TValue>(ReadOnlySpan<char> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         return OpenTableCore<TKey, TValue>(nameBuffer);
     }
@@ -100,12 +115,16 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void DeleteTable(ReadOnlySpan<byte> utf8Name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(utf8Name);
         DeleteTableCore(nameBuffer);
     }
 
     public readonly void DeleteTable(ReadOnlySpan<char> name)
     {
+        ThrowIfDisposed();
+
         using var nameBuffer = new NullTerminatedUtf8String(name);
         DeleteTableCore(nameBuffer);
     }
@@ -124,6 +143,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void RenameTable(ReadOnlySpan<byte> oldUtf8Name, ReadOnlySpan<byte> newUtf8Name)
     {
+        ThrowIfDisposed();
+
         using var oldNameBuffer = new NullTerminatedUtf8String(oldUtf8Name);
         using var newNameBuffer = new NullTerminatedUtf8String(newUtf8Name);
         RenameTableCore(oldNameBuffer, newNameBuffer);
@@ -131,6 +152,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public readonly void RenameTable(ReadOnlySpan<char> oldName, ReadOnlySpan<char> newName)
     {
+        ThrowIfDisposed();
+
         using var oldNameBuffer = new NullTerminatedUtf8String(oldName);
         using var newNameBuffer = new NullTerminatedUtf8String(newName);
         RenameTableCore(oldNameBuffer, newNameBuffer);
@@ -151,6 +174,8 @@ public unsafe struct WriteTransaction : IDisposable
 
     public void Commit()
     {
+        ThrowIfDisposed();
+
         var code = NativeMethods.redb_write_tx_commit(tx);
         if (code != 0)
         {
@@ -264,11 +289,9 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly void ThrowIfDisposed()
     {
-        if (tx == null)
-        {
-            throw new ObjectDisposedException(nameof(WriteTransaction));
-        }
+        ThrowHelper.ThrowIfDisposed(tx == null, nameof(WriteTransaction));
     }
 }

@@ -1,6 +1,8 @@
+using System.Runtime.CompilerServices;
+
 namespace Redb;
 
-public unsafe struct RedbBlob : IDisposable
+public unsafe class RedbBlob : IDisposable
 {
     byte* ptr;
     nuint length;
@@ -11,17 +13,36 @@ public unsafe struct RedbBlob : IDisposable
         this.length = length;
     }
 
-    public readonly ReadOnlySpan<byte> AsSpan()
+    public ReadOnlySpan<byte> AsSpan()
     {
+        ThrowIfDisposed();
+
         return new ReadOnlySpan<byte>(ptr, (int)length);
     }
 
     public void Dispose()
+    {
+        DisposeCore();
+        GC.SuppressFinalize(this);
+    }
+
+    ~RedbBlob()
+    {
+        DisposeCore();
+    }
+
+    void DisposeCore()
     {
         if (ptr != null)
         {
             NativeMethods.redb_free_blob(ptr);
             ptr = null;
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void ThrowIfDisposed()
+    {
+        ThrowHelper.ThrowIfDisposed(ptr == null, nameof(RedbBlob));
     }
 }
