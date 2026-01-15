@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace Redb;
 
@@ -288,11 +289,9 @@ public unsafe struct WriteTransaction : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly void ThrowIfDisposed()
     {
-        if (tx == null)
-        {
-            throw new ObjectDisposedException(nameof(WriteTransaction));
-        }
+        ThrowHelper.ThrowIfDisposed(tx == null, nameof(WriteTransaction));
     }
 }

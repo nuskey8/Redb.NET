@@ -35,12 +35,10 @@ public unsafe struct Table : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly void ThrowIfDisposed()
     {
-        if (table == null)
-        {
-            throw new ObjectDisposedException(nameof(Table));
-        }
+        ThrowHelper.ThrowIfDisposed(table == null, nameof(Table));
     }
 
     public void Dispose()

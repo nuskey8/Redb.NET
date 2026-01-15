@@ -36,7 +36,7 @@ public unsafe struct ReadOnlyTable : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public readonly bool TryGet(ReadOnlySpan<byte> key, out RedbBlob blob)
+    public readonly bool TryGet(ReadOnlySpan<byte> key, [NotNullWhen(true)] out RedbBlob? blob)
     {
         ThrowIfDisposed();
 
@@ -58,13 +58,10 @@ public unsafe struct ReadOnlyTable : IDisposable
         }
     }
 
-
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly void ThrowIfDisposed()
     {
-        if (table == null)
-        {
-            throw new ObjectDisposedException(nameof(ReadOnlyTable));
-        }
+        ThrowHelper.ThrowIfDisposed(table == null, nameof(ReadOnlyTable));
     }
 }
 

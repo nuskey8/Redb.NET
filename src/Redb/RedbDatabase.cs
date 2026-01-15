@@ -128,11 +128,9 @@ public unsafe sealed class RedbDatabase : IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void ThrowIfDisposed()
     {
-        if (db == null)
-        {
-            throw new ObjectDisposedException(nameof(RedbDatabase));
-        }
+        ThrowHelper.ThrowIfDisposed(db == null, nameof(RedbDatabase));
     }
 }

@@ -110,11 +110,9 @@ public unsafe struct ReadTransaction : IDisposable
         return new ReadOnlyTable<TKey, TValue>(database, table);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     readonly void ThrowIfDisposed()
     {
-        if (tx == null)
-        {
-            throw new ObjectDisposedException(nameof(ReadTransaction));
-        }
+        ThrowHelper.ThrowIfDisposed(tx == null, nameof(ReadTransaction));
     }
 }
