@@ -53,7 +53,7 @@ using (var tx = db.BeginWrite())
         table.Insert("bar", 30);
     }
 
-    writetx.Commit();
+    tx.Commit();
 }
 
 using (var tx = db.BeginRead())
