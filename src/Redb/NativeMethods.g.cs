@@ -29,6 +29,7 @@ namespace Redb
         internal const int REDB_ERROR_TABLE_EXISTS = 26;
         internal const int REDB_ERROR_TABLE_ALREADY_OPEN = 27;
         internal const int REDB_ERROR_READ_TRANSACTION_STILL_IN_USE = 41;
+        internal const int REDB_ERROR_INVALID_SAVEPOINT = 51;
         internal const int REDB_ERROR_KEY_NOT_FOUND = 100;
 
 
@@ -58,8 +59,14 @@ namespace Redb
         [DllImport(__DllName, EntryPoint = "redb_free_read_transaction", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void redb_free_read_transaction(void* tx);
 
+        [DllImport(__DllName, EntryPoint = "redb_free_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void redb_free_savepoint(void* savepoint);
+
         [DllImport(__DllName, EntryPoint = "redb_free_string", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void redb_free_string(byte* s);
+
+        [DllImport(__DllName, EntryPoint = "redb_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern void redb_free(void* ptr);
 
         [DllImport(__DllName, EntryPoint = "redb_free_blob", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern void redb_free_blob(byte* blob);
@@ -90,6 +97,24 @@ namespace Redb
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_commit", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern int redb_write_tx_commit(void* tx);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_ephemeral_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_ephemeral_savepoint(void* tx, void** @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_restore_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_restore_savepoint(void* tx, void* savepoint);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_persistent_savepoint(void* tx, ulong* @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_get_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_get_persistent_savepoint(void* tx, ulong id, void** @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_delete_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_delete_persistent_savepoint(void* tx, ulong id, bool* @out);
+
+        [DllImport(__DllName, EntryPoint = "redb_write_tx_lists_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+        internal static extern int redb_write_tx_lists_persistent_savepoint(void* tx, ulong** @out, nuint* count);
 
         [DllImport(__DllName, EntryPoint = "redb_insert", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
         internal static extern int redb_insert(void* table, byte* key, nuint key_len, byte* value, nuint value_len);
