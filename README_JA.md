@@ -1,6 +1,6 @@
 # Redb.NET
 
-redb (An embedded key-value database for Rust) bindings for .NET and Unity.
+redb (An embedded key-value database) bindings for .NET and Unity.
 
 [![NuGet](https://img.shields.io/nuget/v/Redb.svg)](https://www.nuget.org/packages/Redb)
 [![Releases](https://img.shields.io/github/release/nuskey8/Redb.NET.svg)](https://github.com/nuskey8/Redb.NET/releases)
@@ -157,7 +157,7 @@ record Person(string Name, int Age);
 
 ## サポートされる機能
 
-Redb.NETは現在プレビューであり、SavepointやMultimapTableなどの機能に対応するC# APIが実装されていません。これは正式版までにサポートされる予定です。
+Redb.NETは現在プレビューであり、MultimapTableなどの機能に対応するC# APIが実装されていません。これは正式版までにサポートされる予定です。
 
 ## ライセンス
 

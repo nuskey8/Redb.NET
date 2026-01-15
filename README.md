@@ -1,6 +1,6 @@
 # Redb.NET
 
-redb (An embedded key-value database for Rust) bindings for .NET and Unity.
+redb (An embedded key-value database) bindings for .NET and Unity.
 
 [![NuGet](https://img.shields.io/nuget/v/Redb.svg)](https://www.nuget.org/packages/Redb)
 [![Releases](https://img.shields.io/github/release/nuskey8/Redb.NET.svg)](https://github.com/nuskey8/Redb.NET/releases)
@@ -157,7 +157,7 @@ record Person(string Name, int Age);
 
 ## Supported Features
 
-Redb.NET is currently in preview, and some features like Savepoint and MultimapTable are not yet implemented in the C# API. These are planned to be supported in the stable release.
+Redb.NET is currently in preview, and some features like MultimapTable are not yet implemented in the C# API. These are planned to be supported in the stable release.
 
 ## License
 
