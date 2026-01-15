@@ -1,0 +1,9 @@
+{
+    "name": "com.nuskey.redb.unity",
+    "version": "0.0.3",
+    "displayName": "Redb",
+    "description": "redb (An embedded key-value database) bindings for .NET and Unity",
+    "author": {
+        "name": "nuskey"
+    }
+}

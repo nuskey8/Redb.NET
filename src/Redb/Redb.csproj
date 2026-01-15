@@ -42,4 +42,11 @@
     <EmbeddedResource Include="..\..\LICENSE" />
   </ItemGroup>
 
+  <!-- Copy files to Unity project -->
+  <Target Name="CopyDllToUnity" AfterTargets="AfterBuild"
+    Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Copy SourceFiles="$(OutputPath)\Redb.dll"
+      DestinationFolder="$(ProjectDir)\..\Redb.Unity\Assets\Redb.Unity\Runtime\" />
+  </Target>
+
 </Project>
