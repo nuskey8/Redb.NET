@@ -1,7 +1,7 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
-namespace Redb;
+namespace Redb.Internal;
 
 internal struct PooledList<T>
 {

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Redb;
+namespace Redb.Internal;
 
 internal static class ThrowHelper
 {

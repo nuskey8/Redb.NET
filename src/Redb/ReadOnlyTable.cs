@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Redb.Internal;
 
 namespace Redb;
 
@@ -103,24 +104,38 @@ public unsafe sealed class ReadOnlyTable : IDisposable
 
         public Enumerator GetEnumerator()
         {
-            return new Enumerator(iter);
+            if (iter == null)
+            {
+                throw new InvalidOperationException("The range enumerable has already been enumerated.");
+            }
+
+            var e = new Enumerator(iter);
+            iter = null;
+            return e;
         }
     }
 
-    public ref struct Enumerator : IDisposable
+    public ref struct Enumerator
     {
         void* iter;
-        RedbBlobKeyValuePair current;
+        RedbBlob keyBlob;
+        RedbBlob valueBlob;
+
+        ReadOnlySpanKeyValuePair current;
 
         internal Enumerator(void* iter)
         {
             this.iter = iter;
         }
 
-        public RedbBlobKeyValuePair Current => current;
+        public ReadOnlySpanKeyValuePair Current => current;
 
         public bool MoveNext()
         {
+            // dispose prev key/value blobs
+            keyBlob.Dispose();
+            valueBlob.Dispose();
+
             if (iter == null) return false;
 
             byte* keyPtr;
@@ -131,11 +146,15 @@ public unsafe sealed class ReadOnlyTable : IDisposable
             var code = NativeMethods.redb_iter_next(iter, &keyPtr, &keyLen, &valuePtr, &valueLen);
             if (code == NativeMethods.REDB_OK)
             {
-                current = new RedbBlobKeyValuePair
+                keyBlob = new RedbBlob(keyPtr, keyLen);
+                valueBlob = new RedbBlob(valuePtr, valueLen);
+
+                current = new ReadOnlySpanKeyValuePair
                 {
-                    Key = new RedbBlob(keyPtr, keyLen),
-                    Value = new RedbBlob(valuePtr, valueLen),
+                    Key = keyBlob.AsSpan(),
+                    Value = valueBlob.AsSpan(),
                 };
+
                 return true;
             }
             else
@@ -148,6 +167,9 @@ public unsafe sealed class ReadOnlyTable : IDisposable
         {
             if (iter != null)
             {
+                keyBlob.Dispose();
+                valueBlob.Dispose();
+
                 NativeMethods.redb_free_iter(iter);
                 iter = null;
             }
@@ -286,9 +308,9 @@ public unsafe sealed class ReadOnlyTable<TKey, TValue> : IDisposable
         {
             if (inner.MoveNext())
             {
-                using var kv = inner.Current;
-                var key = encoding.Decode<TKey>(kv.Key.AsSpan());
-                var value = encoding.Decode<TValue>(kv.Value.AsSpan());
+                var kv = inner.Current;
+                var key = encoding.Decode<TKey>(kv.Key);
+                var value = encoding.Decode<TValue>(kv.Value);
                 current = new KeyValuePair<TKey, TValue>(key, value);
                 return true;
             }

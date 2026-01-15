@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using Redb.Internal;
 
 namespace Redb;
 
@@ -13,7 +14,7 @@ public unsafe struct RedbBlob : IDisposable
         this.length = length;
     }
 
-    public ReadOnlySpan<byte> AsSpan()
+    public readonly ReadOnlySpan<byte> AsSpan()
     {
         ThrowIfDisposed();
         return new ReadOnlySpan<byte>(ptr, (int)length);
@@ -32,17 +33,5 @@ public unsafe struct RedbBlob : IDisposable
     readonly void ThrowIfDisposed()
     {
         ThrowHelper.ThrowIfDisposed(ptr == null, nameof(RedbBlob));
-    }
-}
-
-public struct RedbBlobKeyValuePair : IDisposable
-{
-    public RedbBlob Key;
-    public RedbBlob Value;
-
-    public void Dispose()
-    {
-        Key.Dispose();
-        Value.Dispose();
     }
 }
