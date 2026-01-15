@@ -28,6 +28,9 @@ pub const REDB_ERROR_TABLE_ALREADY_OPEN: i32 = 27;
 // 41- TransactionError
 pub const REDB_ERROR_READ_TRANSACTION_STILL_IN_USE: i32 = 41;
 
+// 51- SavepointError
+pub const REDB_ERROR_INVALID_SAVEPOINT: i32 = 51;
+
 // 100- Custom errors
 pub const REDB_ERROR_KEY_NOT_FOUND: i32 = 100;
 
@@ -61,6 +64,14 @@ fn transaction_error_code(err: &redb::TransactionError) -> i32 {
             REDB_ERROR_READ_TRANSACTION_STILL_IN_USE
         }
         redb::TransactionError::Storage(_) => REDB_ERROR_STORAGE_ERROR,
+        _ => todo!(),
+    }
+}
+
+fn savepoint_error_code(err: &redb::SavepointError) -> i32 {
+    match err {
+        redb::SavepointError::InvalidSavepoint => REDB_ERROR_INVALID_SAVEPOINT,
+        redb::SavepointError::Storage(_) => REDB_ERROR_STORAGE_ERROR,
         _ => todo!(),
     }
 }
@@ -225,12 +236,32 @@ pub extern "C" fn redb_free_read_transaction(tx: *mut c_void) {
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn redb_free_savepoint(savepoint: *mut c_void) {
+    if savepoint.is_null() {
+        return;
+    }
+    unsafe {
+        drop(Box::from_raw(savepoint as *mut redb::Savepoint));
+    }
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn redb_free_string(s: *mut c_char) {
     if s.is_null() {
         return;
     }
     unsafe {
         drop(std::ffi::CString::from_raw(s));
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_free(ptr: *mut c_void) {
+    if ptr.is_null() {
+        return;
+    }
+    unsafe {
+        drop(Box::from_raw(ptr));
     }
 }
 
@@ -414,6 +445,133 @@ pub extern "C" fn redb_write_tx_commit(tx: *mut c_void) -> i32 {
             _ => todo!(),
         },
     }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_ephemeral_savepoint(tx: *mut c_void, out: *mut *mut c_void) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.ephemeral_savepoint() {
+        Ok(savepoint) => {
+            unsafe {
+                *out = Box::into_raw(Box::new(savepoint)) as *mut c_void;
+            };
+            REDB_OK
+        }
+        Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_restore_savepoint(tx: *mut c_void, savepoint: *mut c_void) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    let savepoint = unsafe {
+        assert!(!savepoint.is_null());
+        &*(savepoint as *mut redb::Savepoint)
+    };
+
+    match tx.restore_savepoint(savepoint) {
+        Ok(_) => REDB_OK,
+        Err(_) => REDB_ERROR_STORAGE_ERROR,
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_persistent_savepoint(tx: *mut c_void, out: *mut u64) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.persistent_savepoint() {
+        Ok(id) => {
+            unsafe {
+                *out = id;
+            };
+            REDB_OK
+        }
+        Err(err) => match err {
+            redb::SavepointError::InvalidSavepoint => REDB_ERROR_INVALID_SAVEPOINT,
+            redb::SavepointError::Storage(_) => REDB_ERROR_STORAGE_ERROR,
+            _ => todo!(),
+        },
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_get_persistent_savepoint(
+    tx: *mut c_void,
+    id: u64,
+    out: *mut *mut c_void,
+) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.get_persistent_savepoint(id) {
+        Ok(savepoint) => {
+            unsafe {
+                *out = Box::into_raw(Box::new(savepoint)) as *mut c_void;
+            };
+            REDB_OK
+        }
+        Err(err) => savepoint_error_code(&err),
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_delete_persistent_savepoint(
+    tx: *mut c_void,
+    id: u64,
+    out: *mut bool,
+) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    match tx.delete_persistent_savepoint(id) {
+        Ok(ret) => {
+            unsafe {
+                *out = ret;
+            };
+            REDB_OK
+        }
+        Err(err) => savepoint_error_code(&err),
+    }
+}
+
+#[unsafe(no_mangle)]
+pub extern "C" fn redb_write_tx_lists_persistent_savepoint(
+    tx: *mut c_void,
+    out: *mut *mut u64,
+    count: *mut usize,
+) -> i32 {
+    let tx = unsafe {
+        assert!(!tx.is_null());
+        &mut *(tx as *mut redb::WriteTransaction)
+    };
+
+    let iter = match tx.list_persistent_savepoints() {
+        Ok(iter) => iter,
+        Err(_) => return REDB_ERROR_STORAGE_ERROR,
+    };
+
+    let result = iter.collect::<Vec<_>>();
+    unsafe {
+        *count = result.len();
+        *out = Box::into_raw(result.into_boxed_slice()) as *mut u64;
+    }
+
+    REDB_OK
 }
 
 #[unsafe(no_mangle)]
