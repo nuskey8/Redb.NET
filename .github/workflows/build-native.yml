@@ -59,53 +59,50 @@ jobs:
               runtime="${dir#native-}"
               
               echo "Processing $runtime..."
-              mkdir -p "../src/Redb/runtimes/$runtime/native"
               
-              # Rename redb.dll to libredb.dll for Windows
-              if [[ "$runtime" =~ ^win- ]]; then
-                for file in "$dir"/*; do
-                  filename=$(basename "$file")
-                  if [[ "$filename" == "redb.dll" ]]; then
-                    cp -v "$file" "../src/Redb/runtimes/$runtime/native/libredb.dll"
-                  else
-                    cp -v "$file" "../src/Redb/runtimes/$runtime/native/"
-                  fi
-                done
-              else
-                cp -v "$dir"/* "../src/Redb/runtimes/$runtime/native/"
+              # Copy to Redb/runtimes only for win, osx, linux
+              if [[ "$runtime" =~ ^(win-|osx-|linux-) ]]; then
+                mkdir -p "../src/Redb/runtimes/$runtime/native"
+                
+                # Rename redb.dll to libredb.dll for Windows
+                if [[ "$runtime" =~ ^win- ]]; then
+                  for file in "$dir"/*; do
+                    filename=$(basename "$file")
+                    if [[ "$filename" == "redb.dll" ]]; then
+                      cp -v "$file" "../src/Redb/runtimes/$runtime/native/libredb.dll"
+                    else
+                      cp -v "$file" "../src/Redb/runtimes/$runtime/native/"
+                    fi
+                  done
+                else
+                  cp -v "$dir"/* "../src/Redb/runtimes/$runtime/native/"
+                fi
               fi
 
-              # Copy to Unity Plugins directory
+              # Copy to Unity Plugins directory (all platforms)
               case "$runtime" in
-                osx-x64)
+                osx-x64|osx-arm64)
                   mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
                   cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
                   ;;
-                osx-arm64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
-                  ;;
-                linux-x64)
+                linux-x64|linux-arm64)
                   mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
                   cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
                   ;;
-                win-x64)
+                win-x64|win-arm64)
                   mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.dll "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  # Copy libredb.dll for Windows (already renamed in artifact)
+                  if [ -f "$dir"/libredb.dll ]; then
+                    cp -v "$dir"/libredb.dll "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/"
+                  elif [ -f "$dir"/redb.dll ]; then
+                    cp -v "$dir"/redb.dll "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/libredb.dll"
+                  fi
                   ;;
-                android-arm64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
-                  ;;
-                android-armv7)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
-                  ;;
-                android-x86_64)
+                android-arm64|android-armv7|android-x86_64)
                   mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
                   cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
                   ;;
-                ios-arm64)
+                ios-arm64|ios-arm64-simulator|ios-x64-simulator)
                   mkdir -p "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime"
                   cp -v "$dir"/libredb.a "../src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/$runtime/" 2>/dev/null || true
                   ;;
