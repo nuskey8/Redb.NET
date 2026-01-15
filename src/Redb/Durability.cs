@@ -1,6 +1,6 @@
 namespace Redb;
 
-public enum RedbDurability
+public enum Durability
 {
     None,
     Immediate,

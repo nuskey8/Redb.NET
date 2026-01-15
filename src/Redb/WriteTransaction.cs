@@ -14,7 +14,7 @@ public unsafe struct WriteTransaction : IDisposable
         this.tx = tx;
     }
 
-    public readonly void SetDurability(RedbDurability durability)
+    public readonly void SetDurability(Durability durability)
     {
         ThrowIfDisposed();
 
