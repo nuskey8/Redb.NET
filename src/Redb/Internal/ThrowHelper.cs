@@ -5,7 +5,6 @@ namespace Redb.Internal;
 
 internal static class ThrowHelper
 {
-    [StackTraceHidden]
     public static void ThrowIfDisposed([DoesNotReturnIf(true)] bool condition, string name)
     {
         if (condition)
@@ -14,7 +13,6 @@ internal static class ThrowHelper
         }
     }
 
-    [StackTraceHidden]
     public static void ThrowIfError(int code, string message)
     {
         if (code != NativeMethods.REDB_OK)
