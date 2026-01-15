@@ -36,7 +36,41 @@ Install-Package Redb
 
 ### Unity
 
-WIP
+Unityの場合、Package Managerからのインストールが可能です。
+
+1. Window > Package ManagerからPackage Managerを開く
+2. 「+」ボタン > Add package from git URL
+3. 以下のURLを入力する
+
+```
+https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity
+```
+
+あるいはPackages/manifest.jsonを開き、dependenciesブロックに以下を追記
+
+```json
+{
+    "dependencies": {
+        "com.nuskey.redb.unity": "https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity"
+    }
+}
+```
+
+Redb.NETは以下のプラットフォームに対応しています。
+
+| プラットフォーム | アーキテクチャ          | サポート      | 備考        |
+| ---------------- | ----------------------- | ------------- | ----------- |
+| Windows          | x64                     | ✅             |             |
+|                  | arm64                   | ✅             |             |
+| macOS            | x64                     | ✅             |             |
+|                  | arm64  (Apple Silicon)  | ✅             |             |
+|                  | Universal (x64 + arm64) | ✅             |             |
+| Linux            | x64                     | ✅             |             |
+|                  | arm64                   | ✅             |             |
+| iOS              | arm64                   | ✅    (未検証) | (Unityのみ) |
+|                  | x64                     | ✅   (未検証)  | (Unityのみ) |
+| Android          | arm64                   | ✅   (未検証)  | (Unityのみ) |
+|                  | x64                     | ✅   (未検証)  | (Unityのみ) |
 
 ## クイックスタート
 

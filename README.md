@@ -33,10 +33,43 @@ dotnet add package Redb
 ```ps1
 Install-Package Redb
 ```
-
 ### Unity
 
-WIP
+You can install Redb.NET for Unity via the Package Manager.
+
+1. Open Window > Package Manager in Unity
+2. Click the "+" button > Add package from git URL
+3. Enter the following URL:
+
+```
+https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity
+```
+
+Alternatively, open `Packages/manifest.json` and add the following to the dependencies block:
+
+```json
+{
+    "dependencies": {
+        "com.nuskey.redb.unity": "https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity"
+    }
+}
+```
+
+Redb.NET supports the following platforms:
+
+| Platform | Architecture          | Supported    | Note         |
+| -------- | --------------------- | ------------ | ------------ |
+| Windows  | x64                   | ✅            |              |
+|          | arm64                 | ✅            |              |
+| macOS    | x64                   | ✅            |              |
+|          | arm64 (Apple Silicon) | ✅            |              |
+|          | Universal (x64+arm64) | ✅            |              |
+| Linux    | x64                   | ✅            |              |
+|          | arm64                 | ✅            |              |
+| iOS      | arm64                 | ✅ (untested) | (Unity only) |
+|          | x64                   | ✅ (untested) | (Unity only) |
+| Android  | arm64                 | ✅ (untested) | (Unity only) |
+|          | x64                   | ✅ (untested) | (Unity only) |
 
 ## Quick Start
 
