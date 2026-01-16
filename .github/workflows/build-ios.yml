@@ -55,7 +55,6 @@ jobs:
       - name: Prepare artifact
         run: |
           mkdir -p artifacts/${{ matrix.runtime }}/native
-          cp native/redb-ffi/target/${{ matrix.target }}/release/libredb.dylib artifacts/${{ matrix.runtime }}/native/ || \
           cp native/redb-ffi/target/${{ matrix.target }}/release/libredb.a artifacts/${{ matrix.runtime }}/native/
 
       - name: Upload artifact
