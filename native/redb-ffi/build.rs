@@ -7,11 +7,14 @@ fn main() {
         .csharp_namespace("Redb.Interop")
         .csharp_class_accessibility("public");
 
+    // .NET
     builder
         .generate_csharp_file("../../src/Redb.Interop/NativeMethods.g.cs")
         .unwrap();
 
+    // Unity
     builder
+        .csharp_dll_name_if("UNITY_IOS && !UNITY_EDITOR", "__Internal")
         .generate_csharp_file("../../src/Redb.Unity/Assets/Redb/Runtime/NativeMethods.g.cs")
         .unwrap();
 }
