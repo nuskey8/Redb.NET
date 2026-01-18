@@ -33,7 +33,7 @@ PluginImporter:
       settings:
         CPU: ARM64
         DefaultValueInitialized: true
-        OS: AnyOS
+        OS: Windows
     Linux64:
       enabled: 0
       settings:

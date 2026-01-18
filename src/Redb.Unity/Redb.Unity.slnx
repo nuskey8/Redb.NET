@@ -1,5 +1,4 @@
 ﻿<Solution>
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Redb.Interop.csproj" />
-  <Project Path="Redb.Unity.csproj" />
 </Solution>
