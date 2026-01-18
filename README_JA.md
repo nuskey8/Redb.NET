@@ -12,65 +12,61 @@ redb (An embedded key-value database) bindings for .NET and Unity.
 
 Redb.NETはRust実装の組み込みDBである[redb](https://github.com/cberner/redb)のハイパフォーマンスなC#バインディングです。
 
-組み込みDBとして有名なのはSQLiteや、KVデータベースとしてはRocksDBなどが挙げられますが、redbは仕様のシンプルさや十分に高いパフォーマンス、並行処理のサポートが特徴で、組み込みDBとして優れた選択肢の一つです。
+組み込みDBとして有名なのはSQLiteや、KVデータベースとしてはLMDBやRocksDBなどが挙げられますが、redbは仕様のシンプルさや安定性、十分に高いパフォーマンス、並行処理のサポートなど、組み込みDBとして優れた選択肢の一つです。
 
 Redb.NETはredbの高レベルなバインディングであり、C#向けの扱いやすいAPIを提供します。バインディング層のパフォーマンスも入念にチューニングされているため、パフォーマンス上のオーバーヘッドはありません。
 
 ## インストール
 
+> [!WARNING]
+> Redb.NETはネイティブライブラリを含むため、.NETとUnityで導入手順が大きく異なります。混同しないように注意してください。
+
 ### NuGet packages
 
 Redb.NETを利用するには.NET Standard2.1以上が必要です。パッケージはNuGetから入手できます。
 
-### .NET CLI
-
-```ps1
-dotnet add package Redb
-```
-
-### Package Manager
-
-```ps1
-Install-Package Redb
-```
+| パッケージ          | 説明                                                               | 最新バージョン                                                                                                         |
+| ------------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Redb                | Redb.NETのメインパッケージ。                                       | [![NuGet](https://img.shields.io/nuget/v/Redb.svg)](https://www.nuget.org/packages/Redb)                               |
+| Redb.SystemTextJson | System.Text.Jsonによるシリアライズをサポートする拡張パッケージ。   | [![NuGet](https://img.shields.io/nuget/v/Redb.SystemTextJson.svg)](https://www.nuget.org/packages/Redb.SystemTextJson) |
+| Redb.MessagePack    | MessagePack for C#によるシリアライズをサポートする拡張パッケージ。 | [![NuGet](https://img.shields.io/nuget/v/Redb.MessagePack.svg)](https://www.nuget.org/packages/Redb.MessagePack)       |
 
 ### Unity
 
-Unityの場合、Package Managerからのインストールが可能です。
+Unityの場合、拡張パッケージを含むすべてのパッケージはPackage Managerからのインストールが可能です。
 
 1. Window > Package ManagerからPackage Managerを開く
 2. 「+」ボタン > Add package from git URL
-3. 以下のURLを入力する
+3. 対応するパッケージのURLを入力する
 
-```
-https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity
-```
+| パッケージ          | URL                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| Redb                | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb`                |
+| Redb.SystemTextJson | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.SystemTextJson` |
+| Redb.MessagePack    | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.MessagePack`    |
 
-あるいはPackages/manifest.jsonを開き、dependenciesブロックに以下を追記
+拡張パッケージを利用するには、それぞれ別に`System.Text.Json`や`MessagePack`の導入が必要です。これらは[NugetForUnity](https://github.com/GlitchEnzo/NuGetForUnity)などで追加できます。
 
-```json
-{
-    "dependencies": {
-        "com.nuskey.redb.unity": "https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity"
-    }
-}
-```
+> [!WARNING]
+> バインディングの実装が異なるため、Redb.NETのNuGet版をUnityで利用することはできません。必ず上の方法で導入を行なってください。
+
+## プラットフォーム
 
 Redb.NETは以下のプラットフォームに対応しています。
 
-| プラットフォーム | アーキテクチャ          | サポート      | 備考        |
-| ---------------- | ----------------------- | ------------- | ----------- |
-| Windows          | x64                     | ✅             |             |
-|                  | arm64                   | ✅             |             |
-| macOS            | x64                     | ✅             |             |
-|                  | arm64  (Apple Silicon)  | ✅             |             |
-| Linux            | x64                     | ✅             |             |
-|                  | arm64                   | ✅             |             |
-| iOS              | arm64                   | ✅    (未検証) | (Unityのみ) |
-|                  | x64                     | ✅   (未検証)  | (Unityのみ) |
-| Android          | arm64                   | ✅   (未検証)  | (Unityのみ) |
-|                  | armv7                   | ✅   (未検証)  | (Unityのみ) |
-|                  | x86_64                  | ✅   (未検証)  | (Unityのみ) |
+| プラットフォーム | アーキテクチャ         | サポート    | 備考        |
+| ---------------- | ---------------------- | ----------- | ----------- |
+| Windows          | x64                    | ✅           |             |
+|                  | arm64                  | ✅           |             |
+| macOS            | x64                    | ✅           |             |
+|                  | arm64  (Apple Silicon) | ✅           |             |
+| Linux            | x64                    | ✅           |             |
+|                  | arm64                  | ✅           |             |
+| iOS              | arm64                  | ✅  (未検証) | (Unityのみ) |
+|                  | x64                    | ✅  (未検証) | (Unityのみ) |
+| Android          | arm64                  | ✅  (未検証) | (Unityのみ) |
+|                  | armv7                  | ✅  (未検証) | (Unityのみ) |
+|                  | x86_64                 | ✅  (未検証) | (Unityのみ) |
 
 ## クイックスタート
 
@@ -155,14 +151,15 @@ redbのDBファイルはデフォルトでは1MB以上のサイズがありま�
 
 デフォルトではバイナリ(`ReadOnlySpan<byte>`)とプリミティブ型、`Guid`、`DateTime`、`TimeSpan`をキーや値として利用できますが、DBにシリアライザを接続することで任意のオブジェクトをキーや値として利用することが可能になります。
 
-現在はSystem.Text.Jsonに対応していますが、MessagePack for C#やMemoryPackにも今後対応する予定です。
+現在はSystem.Text.JsonとMessagePack for C#に対応しています。
 
 ```cs
 using Redb;
 using Redb.SystemTextJson;
+// using Redb.MessagePack;
 
 using var db = RedbDatabase.Create("test.redb", RedbDatabaseOptions.Default)
-    .WithJsonSerializer();
+    .WithJsonSerializer(); // or .WithMessagePackSerializer();
 
 using (var tx = db.BeginWrite())
 {

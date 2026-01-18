@@ -6,58 +6,55 @@ redb (An embedded key-value database) bindings for .NET and Unity.
 [![Releases](https://img.shields.io/github/release/nuskey8/Redb.NET.svg)](https://github.com/nuskey8/Redb.NET/releases)
 [![license](https://img.shields.io/badge/LICENSE-MIT-green.svg)](LICENSE)
 
-English | [日本語](/README_JA.md)
+English | [日本語](README.md)
 
 ## Overview
 
 Redb.NET is a high-performance C# binding for [redb](https://github.com/cberner/redb), an embedded database implemented in Rust.
 
-While SQLite is well-known as an embedded database and RocksDB as a key-value database, redb stands out as an excellent choice for its simplicity, high performance, and support for concurrency.
+While SQLite is well-known as an embedded database, and LMDB or RocksDB as key-value databases, redb stands out as an excellent choice for its simplicity, stability, high performance, and support for concurrency.
 
-Redb.NET provides a high-level binding for redb and offers an easy-to-use API for C#. The binding layer is carefully tuned for performance, ensuring no overhead.
+Redb.NET provides a high-level binding for redb, offering an easy-to-use API for C#. The binding layer is carefully tuned for performance, ensuring no overhead.
 
 ## Installation
 
+> [!WARNING]
+> Redb.NET includes native libraries, so the installation process differs significantly between .NET and Unity. Be careful not to confuse the two.
+
 ### NuGet packages
 
-Redb.NET requires .NET Standard 2.1 or later. The package is available on NuGet.
+Redb.NET requires .NET Standard 2.1 or higher. Packages are available on NuGet.
 
-### .NET CLI
+| Package             | Description                                                         | Latest Version                                                                                                         |
+| ------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Redb                | The main package for Redb.NET.                                      | [![NuGet](https://img.shields.io/nuget/v/Redb.svg)](https://www.nuget.org/packages/Redb)                               |
+| Redb.SystemTextJson | Extension package supporting serialization with System.Text.Json.   | [![NuGet](https://img.shields.io/nuget/v/Redb.SystemTextJson.svg)](https://www.nuget.org/packages/Redb.SystemTextJson) |
+| Redb.MessagePack    | Extension package supporting serialization with MessagePack for C#. | [![NuGet](https://img.shields.io/nuget/v/Redb.MessagePack.svg)](https://www.nuget.org/packages/Redb.MessagePack)       |
 
-```ps1
-dotnet add package Redb
-```
-
-### Package Manager
-
-```ps1
-Install-Package Redb
-```
 ### Unity
 
-You can install Redb.NET for Unity via the Package Manager.
+For Unity, all packages, including extension packages, can be installed via the Package Manager.
 
-1. Open Window > Package Manager in Unity
-2. Click the "+" button > Add package from git URL
-3. Enter the following URL:
+1. Open the Package Manager from Window > Package Manager.
+2. Click the "+" button > Add package from git URL.
+3. Enter the URL for the corresponding package.
 
-```
-https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity
-```
+| Package             | URL                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| Redb                | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb`                |
+| Redb.SystemTextJson | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.SystemTextJson` |
+| Redb.MessagePack    | https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.MessagePack`    |
 
-Alternatively, open `Packages/manifest.json` and add the following to the dependencies block:
+To use the extension packages, you need to separately add `System.Text.Json` or `MessagePack` using tools like [NugetForUnity](https://github.com/GlitchEnzo/NuGetForUnity).
 
-```json
-{
-    "dependencies": {
-        "com.nuskey.redb.unity": "https://github.com/nuskey8/Redb.NET.git?path=src/Redb.Unity/Assets/Redb.Unity"
-    }
-}
-```
+> [!WARNING]
+> Due to differences in the binding implementation, the NuGet version of Redb.NET cannot be used in Unity. Always install it using the above method.
+
+## Platforms
 
 Redb.NET supports the following platforms:
 
-| Platform | Architecture          | Supported    | Note         |
+| Platform | Architecture          | Supported    | Notes        |
 | -------- | --------------------- | ------------ | ------------ |
 | Windows  | x64                   | ✅            |              |
 |          | arm64                 | ✅            |              |
@@ -116,14 +113,14 @@ using var table1 = tx.OpenTable<string, int>("my_table");
 using var table2 = tx.OpenTable("my_table");
 ```
 
-In `Table<TKey, TValue>`/`ReadOnlyTable<TKey, TValue>`, the keys and values are strongly typed during read and write operations.
+In `Table<TKey, TValue>`/`ReadOnlyTable<TKey, TValue>`, the keys and values are strongly typed when reading and writing values.
 
 ```cs
 table1.Insert("foo", 1);
 int value = readOnlyTable1.Get("foo");
 ```
 
-Serialization is automatically handled by the `IRedbEncoding` set in `RedbDatabase`. By default, primitive types and some other types are supported, but you can connect a custom serializer to support any type. See the [C# Serialization](#c-serialization) section for details.
+This is automatically serialized by the `IRedbEncoding` set in `RedbDatabase`. By default, primitive types and some other types are supported, but you can support any type by connecting a serializer. See the [C# Serialization](#c-serialization) section for details.
 
 In `Table`/`ReadOnlyTable`, you can directly read and write untyped binary data.
 
@@ -132,7 +129,7 @@ table2.Insert("foo"u8, "bar"u8);
 RedbBlob blob = readOnlyTable2.Get("foo"u8);
 ```
 
-`RedbBlob` is a struct that wraps a pointer on the Rust side. It allows you to read values without overhead, but you must dispose of it using `Dispose()`.
+`RedbBlob` is a struct that wraps a pointer on the Rust side. You can read values without overhead through this, but you must dispose of it with `Dispose()`.
 
 ```cs
 var span = blob.AsSpan();
@@ -148,20 +145,21 @@ You can perform compaction by calling `Compact()`.
 db.Compact();
 ```
 
-By default, redb database files are larger than 1MB, but compaction can reduce them to around a few dozen KB.
+The default size of a redb database file is over 1MB, but compaction can reduce it to a few dozen KB.
 
 ## C# Serialization
 
 By default, binary (`ReadOnlySpan<byte>`), primitive types, `Guid`, `DateTime`, and `TimeSpan` can be used as keys or values. By connecting a serializer to the database, you can use any object as a key or value.
 
-Currently, System.Text.Json is supported, and support for MessagePack for C# and MemoryPack is planned.
+Currently, System.Text.Json and MessagePack for C# are supported.
 
 ```cs
 using Redb;
 using Redb.SystemTextJson;
+// using Redb.MessagePack;
 
 using var db = RedbDatabase.Create("test.redb", RedbDatabaseOptions.Default)
-    .WithJsonSerializer();
+    .WithJsonSerializer(); // or .WithMessagePackSerializer();
 
 using (var tx = db.BeginWrite())
 {
@@ -195,4 +193,3 @@ Redb.NET is currently in preview, and some features like MultimapTable are not y
 ## License
 
 This library is provided under the [MIT License](LICENSE).
-
