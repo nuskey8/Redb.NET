@@ -16,6 +16,17 @@ While SQLite is well-known as an embedded database, and LMDB or RocksDB as key-v
 
 Redb.NET provides a high-level binding for redb, offering an easy-to-use API for C#. The binding layer is carefully tuned for performance, ensuring no overhead.
 
+## Benchmarks
+
+### Insert bulk (1000 items)
+
+![](/docs/images/img-bench-insert.png)
+
+### Find by integer key (10000 items, 1000 reads)
+
+![](/docs/images/img-bench-findbykey.png)
+
+
 ## Installation
 
 > [!WARNING]
