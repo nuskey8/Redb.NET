@@ -1,0 +1,16 @@
+{
+    "name": "Redb.Unity",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6efe597a14f1f4c83bc61cf9d4bc80b1"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
