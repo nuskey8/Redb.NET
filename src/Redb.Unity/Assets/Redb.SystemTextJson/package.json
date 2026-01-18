@@ -1,0 +1,9 @@
+{
+    "name": "com.nuskey.redb.systemtextjson",
+    "version": "0.0.3",
+    "displayName": "Redb.SystemTextJson",
+    "description": "Redb.Unity System.Text.Json Encoder",
+    "author": {
+        "name": "nuskey"
+    }
+}

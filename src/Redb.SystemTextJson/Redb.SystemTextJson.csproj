@@ -25,4 +25,11 @@
     <ProjectReference Include="..\Redb\Redb.csproj" />
   </ItemGroup>
 
+  <!-- Copy files to Unity project -->
+  <Target Name="CopyDllToUnity" AfterTargets="AfterBuild"
+    Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Copy SourceFiles="$(OutputPath)\Redb.SystemTextJson.dll"
+      DestinationFolder="$(ProjectDir)\..\Redb.Unity\Assets\Redb.SystemTextJson\" />
+  </Target>
+
 </Project> 

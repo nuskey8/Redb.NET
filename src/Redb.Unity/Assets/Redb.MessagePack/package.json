@@ -1,0 +1,9 @@
+{
+    "name": "com.nuskey.redb.messagepack",
+    "version": "0.0.3",
+    "displayName": "Redb.MessagePack",
+    "description": "Redb.Unity MessagePack Encoder",
+    "author": {
+        "name": "nuskey"
+    }
+}

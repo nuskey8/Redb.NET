@@ -21,4 +21,11 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <!-- Copy files to Unity project -->
+  <Target Name="CopyDllToUnity" AfterTargets="AfterBuild"
+    Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Copy SourceFiles="$(OutputPath)\Redb.MessagePack.dll"
+      DestinationFolder="$(ProjectDir)\..\Redb.Unity\Assets\Redb.MessagePack\" />
+  </Target>
+
 </Project>
