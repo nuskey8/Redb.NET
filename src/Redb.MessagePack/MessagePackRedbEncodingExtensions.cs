@@ -1,10 +1,12 @@
+using MessagePack;
+
 namespace Redb.MessagePack;
 
 public static class MessagePackRedbEncodingExtensions
 {
-    public static RedbDatabase WithMessagePackSerializer(this RedbDatabase database)
+    public static RedbDatabase WithMessagePackSerializer(this RedbDatabase database, MessagePackSerializerOptions? options = null)
     {
-        database.Encoding = MessagePackRedbEncoding.Instance;
+        database.Encoding = new MessagePackRedbEncoding(options);
         return database;
     }
 }

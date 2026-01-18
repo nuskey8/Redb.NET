@@ -3,10 +3,8 @@ using MessagePack;
 
 namespace Redb.MessagePack;
 
-public sealed class MessagePackRedbEncoding : IRedbEncoding
+public sealed class MessagePackRedbEncoding(MessagePackSerializerOptions? options) : IRedbEncoding
 {
-    public static readonly MessagePackRedbEncoding Instance = new();
-
     [ThreadStatic] static ArrayBufferWriter<byte>? bufferWriter;
 
     static ArrayBufferWriter<byte> GetBufferWriter()
@@ -25,17 +23,13 @@ public sealed class MessagePackRedbEncoding : IRedbEncoding
         return writer;
     }
 
-    MessagePackRedbEncoding()
-    {
-    }
-
     public T Decode<T>(ReadOnlySpan<byte> data)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(data.Length);
         try
         {
             data.CopyTo(buffer);
-            return MessagePackSerializer.Deserialize<T>(new ReadOnlySequence<byte>(buffer, 0, data.Length));
+            return MessagePackSerializer.Deserialize<T>(new ReadOnlySequence<byte>(buffer, 0, data.Length), options);
         }
         finally
         {
@@ -46,7 +40,7 @@ public sealed class MessagePackRedbEncoding : IRedbEncoding
     public bool TryEncode<T>(T value, Span<byte> buffer, out int bytesWritten)
     {
         var writer = GetBufferWriter();
-        MessagePackSerializer.Serialize(writer, value);
+        MessagePackSerializer.Serialize(writer, value, options);
         var writtenSpan = writer.WrittenSpan;
 
         if (writtenSpan.Length <= buffer.Length)
