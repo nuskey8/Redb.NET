@@ -4,6 +4,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Redb.Interop/Redb.Interop.csproj" />
+    <Project Path="src/Redb.MessagePack/Redb.MessagePack.csproj" />
     <Project Path="src/Redb.SystemTextJson/Redb.SystemTextJson.csproj" />
     <Project Path="src/Redb/Redb.csproj" />
   </Folder>
