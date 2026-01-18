@@ -45,12 +45,12 @@ jobs:
       - name: Organize artifacts into runtimes directory
         run: |
           # Clear existing runtime directories for linux, macos, and windows only
-          rm -rf src/Redb/runtimes/linux-*/native/*
-          rm -rf src/Redb/runtimes/osx-*/native/*
-          rm -rf src/Redb/runtimes/win-*/native/*
+          rm -rf src/Redb.Interop/runtimes/linux-*/native/*
+          rm -rf src/Redb.Interop/runtimes/osx-*/native/*
+          rm -rf src/Redb.Interop/runtimes/win-*/native/*
 
           # Clear Unity plugin directories
-          rm -rf src/Redb.Unity/Assets/Redb/Runtime/Plugins/*/redb.*
+          rm -rf src/Redb.Unity/Assets/Redb/Interop/Plugins/*/redb.*
 
           # Copy artifacts to appropriate runtime directories
           cd all-artifacts
@@ -95,7 +95,7 @@ jobs:
       - name: Check for changes
         id: check_changes
         run: |
-          if [[ -n $(git status --porcelain src/Redb/runtimes src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins) ]]; then
+          if [[ -n $(git status --porcelain src/Redb.Interop/runtimes src/Redb.Unity/Assets/Redb/Interop/Plugins) ]]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
           else
             echo "has_changes=false" >> $GITHUB_OUTPUT
@@ -106,7 +106,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/Redb/runtimes src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins
+          git add src/Redb.Interop/runtimes src/Redb.Unity/Assets/Redb/Interop/Plugins
           git commit -m "chore: update native libraries for all platforms [skip ci]"
           git push
 
@@ -114,8 +114,8 @@ jobs:
         run: |
           mkdir -p combined-artifacts/runtimes
           mkdir -p combined-artifacts/unity-plugins
-          cp -r src/Redb/runtimes/* combined-artifacts/runtimes/
-          cp -r src/Redb.Unity/Assets/Redb.Unity/Runtime/Plugins/* combined-artifacts/unity-plugins/ 2>/dev/null || true
+          cp -r src/Redb.Interop/runtimes/* combined-artifacts/runtimes/
+          cp -r src/Redb.Unity/Assets/Redb/Interop/Plugins/* combined-artifacts/unity-plugins/ 2>/dev/null || true
 
       - name: Upload combined artifacts
         uses: actions/upload-artifact@v4
