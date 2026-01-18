@@ -6,7 +6,7 @@ redb (An embedded key-value database) bindings for .NET and Unity.
 [![Releases](https://img.shields.io/github/release/nuskey8/Redb.NET.svg)](https://github.com/nuskey8/Redb.NET/releases)
 [![license](https://img.shields.io/badge/LICENSE-MIT-green.svg)](LICENSE)
 
-English | [日本語](README.md)
+English | [日本語](README_JA.md)
 
 ## Overview
 
