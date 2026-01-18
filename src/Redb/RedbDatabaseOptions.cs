@@ -1,3 +1,5 @@
+using Redb.Interop;
+
 namespace Redb;
 
 public enum RedbBackend : int

@@ -8,159 +8,159 @@ using System;
 using System.Runtime.InteropServices;
 
 
-namespace Redb
+namespace Redb.Interop
 {
-    internal static unsafe partial class NativeMethods
+    public static unsafe partial class NativeMethods
     {
         const string __DllName = "libredb";
 
-        internal const int REDB_OK = 0;
-        internal const int REDB_ERROR_FILE_ERROR = 1;
-        internal const int REDB_ERROR_DATABASE_ALREADY_OPEN = 2;
-        internal const int REDB_ERROR_REPAIR_ABORTED = 3;
-        internal const int REDB_ERROR_UPGRADE_REQUIRED = 4;
-        internal const int REDB_ERROR_STORAGE_ERROR = 5;
-        internal const int REDB_ERROR_COMPACTION = 11;
-        internal const int REDB_ERROR_TABLE_TYPE_MISMATCH = 21;
-        internal const int REDB_ERROR_TABLE_IS_MULTIMAP = 22;
-        internal const int REDB_ERROR_TABLE_IS_NOT_MULTIMAP = 23;
-        internal const int REDB_ERROR_TYPE_DEFINITION_CHANGED = 24;
-        internal const int REDB_ERROR_TABLE_DOES_NOT_EXIST = 25;
-        internal const int REDB_ERROR_TABLE_EXISTS = 26;
-        internal const int REDB_ERROR_TABLE_ALREADY_OPEN = 27;
-        internal const int REDB_ERROR_READ_TRANSACTION_STILL_IN_USE = 41;
-        internal const int REDB_ERROR_INVALID_SAVEPOINT = 51;
-        internal const int REDB_ERROR_KEY_NOT_FOUND = 100;
+        public const int REDB_OK = 0;
+        public const int REDB_ERROR_FILE_ERROR = 1;
+        public const int REDB_ERROR_DATABASE_ALREADY_OPEN = 2;
+        public const int REDB_ERROR_REPAIR_ABORTED = 3;
+        public const int REDB_ERROR_UPGRADE_REQUIRED = 4;
+        public const int REDB_ERROR_STORAGE_ERROR = 5;
+        public const int REDB_ERROR_COMPACTION = 11;
+        public const int REDB_ERROR_TABLE_TYPE_MISMATCH = 21;
+        public const int REDB_ERROR_TABLE_IS_MULTIMAP = 22;
+        public const int REDB_ERROR_TABLE_IS_NOT_MULTIMAP = 23;
+        public const int REDB_ERROR_TYPE_DEFINITION_CHANGED = 24;
+        public const int REDB_ERROR_TABLE_DOES_NOT_EXIST = 25;
+        public const int REDB_ERROR_TABLE_EXISTS = 26;
+        public const int REDB_ERROR_TABLE_ALREADY_OPEN = 27;
+        public const int REDB_ERROR_READ_TRANSACTION_STILL_IN_USE = 41;
+        public const int REDB_ERROR_INVALID_SAVEPOINT = 51;
+        public const int REDB_ERROR_KEY_NOT_FOUND = 100;
 
 
 
 
         [DllImport(__DllName, EntryPoint = "redb_create_database", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_create_database(byte* path, redb_database_options* options, void** @out);
+        public static extern int redb_create_database(byte* path, redb_database_options* options, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_open_database", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_open_database(byte* path, void** @out);
+        public static extern int redb_open_database(byte* path, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_compact_database", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_compact_database(void* db);
+        public static extern int redb_compact_database(void* db);
 
         [DllImport(__DllName, EntryPoint = "redb_free_database", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_database(void* db);
+        public static extern void redb_free_database(void* db);
 
         [DllImport(__DllName, EntryPoint = "redb_free_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_table(void* table);
+        public static extern void redb_free_table(void* table);
 
         [DllImport(__DllName, EntryPoint = "redb_free_readonly_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_readonly_table(void* table);
+        public static extern void redb_free_readonly_table(void* table);
 
         [DllImport(__DllName, EntryPoint = "redb_free_write_transaction", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_write_transaction(void* tx);
+        public static extern void redb_free_write_transaction(void* tx);
 
         [DllImport(__DllName, EntryPoint = "redb_free_read_transaction", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_read_transaction(void* tx);
+        public static extern void redb_free_read_transaction(void* tx);
 
         [DllImport(__DllName, EntryPoint = "redb_free_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_savepoint(void* savepoint);
+        public static extern void redb_free_savepoint(void* savepoint);
 
         [DllImport(__DllName, EntryPoint = "redb_free_string", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_string(byte* s);
+        public static extern void redb_free_string(byte* s);
 
         [DllImport(__DllName, EntryPoint = "redb_free", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free(void* ptr);
+        public static extern void redb_free(void* ptr);
 
         [DllImport(__DllName, EntryPoint = "redb_free_blob", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_blob(byte* blob);
+        public static extern void redb_free_blob(byte* blob);
 
         [DllImport(__DllName, EntryPoint = "redb_begin_write", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_begin_write(void* db, void** @out);
+        public static extern int redb_begin_write(void* db, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_set_durability", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_set_durability(void* tx, redb_durability durability);
+        public static extern int redb_write_tx_set_durability(void* tx, redb_durability durability);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_set_quick_repair", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_set_quick_repair(void* tx, [MarshalAs(UnmanagedType.U1)] bool quick_repair);
+        public static extern int redb_write_tx_set_quick_repair(void* tx, [MarshalAs(UnmanagedType.U1)] bool quick_repair);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_set_two_phase_commit", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_set_two_phase_commit(void* tx, [MarshalAs(UnmanagedType.U1)] bool two_phase_commit);
+        public static extern int redb_write_tx_set_two_phase_commit(void* tx, [MarshalAs(UnmanagedType.U1)] bool two_phase_commit);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_open_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_open_table(void* tx, byte* name, void** @out);
+        public static extern int redb_write_tx_open_table(void* tx, byte* name, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_delete_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_delete_table(void* tx, byte* name);
+        public static extern int redb_write_tx_delete_table(void* tx, byte* name);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_rename_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_rename_table(void* tx, byte* old_name, byte* new_name);
+        public static extern int redb_write_tx_rename_table(void* tx, byte* old_name, byte* new_name);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_abort", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_abort(void* tx);
+        public static extern int redb_write_tx_abort(void* tx);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_commit", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_commit(void* tx);
+        public static extern int redb_write_tx_commit(void* tx);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_ephemeral_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_ephemeral_savepoint(void* tx, void** @out);
+        public static extern int redb_write_tx_ephemeral_savepoint(void* tx, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_restore_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_restore_savepoint(void* tx, void* savepoint);
+        public static extern int redb_write_tx_restore_savepoint(void* tx, void* savepoint);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_persistent_savepoint(void* tx, ulong* @out);
+        public static extern int redb_write_tx_persistent_savepoint(void* tx, ulong* @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_get_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_get_persistent_savepoint(void* tx, ulong id, void** @out);
+        public static extern int redb_write_tx_get_persistent_savepoint(void* tx, ulong id, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_delete_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_delete_persistent_savepoint(void* tx, ulong id, bool* @out);
+        public static extern int redb_write_tx_delete_persistent_savepoint(void* tx, ulong id, bool* @out);
 
         [DllImport(__DllName, EntryPoint = "redb_write_tx_lists_persistent_savepoint", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_write_tx_lists_persistent_savepoint(void* tx, ulong** @out, nuint* count);
+        public static extern int redb_write_tx_lists_persistent_savepoint(void* tx, ulong** @out, nuint* count);
 
         [DllImport(__DllName, EntryPoint = "redb_insert", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_insert(void* table, byte* key, nuint key_len, byte* value, nuint value_len);
+        public static extern int redb_insert(void* table, byte* key, nuint key_len, byte* value, nuint value_len);
 
         [DllImport(__DllName, EntryPoint = "redb_begin_read", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_begin_read(void* db, void** @out);
+        public static extern int redb_begin_read(void* db, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_read_tx_open_table", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_read_tx_open_table(void* tx, byte* name, void** @out);
+        public static extern int redb_read_tx_open_table(void* tx, byte* name, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_get", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_get(void* table, byte* key, nuint key_len, byte** blob, nuint* count);
+        public static extern int redb_get(void* table, byte* key, nuint key_len, byte** blob, nuint* count);
 
         [DllImport(__DllName, EntryPoint = "redb_table_len", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_table_len(void* table, ulong* @out);
+        public static extern int redb_table_len(void* table, ulong* @out);
 
         [DllImport(__DllName, EntryPoint = "redb_iter", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_iter(void* table, void** @out);
+        public static extern int redb_iter(void* table, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_range", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_range(void* table, byte* start_key, nuint start_key_len, byte* end_key, nuint end_key_len, void** @out);
+        public static extern int redb_range(void* table, byte* start_key, nuint start_key_len, byte* end_key, nuint end_key_len, void** @out);
 
         [DllImport(__DllName, EntryPoint = "redb_iter_next", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern int redb_iter_next(void* iter, byte** key_blob, nuint* key_len, byte** value_blob, nuint* value_len);
+        public static extern int redb_iter_next(void* iter, byte** key_blob, nuint* key_len, byte** value_blob, nuint* value_len);
 
         [DllImport(__DllName, EntryPoint = "redb_free_iter", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-        internal static extern void redb_free_iter(void* iter);
+        public static extern void redb_free_iter(void* iter);
 
 
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    internal unsafe partial struct redb_database_options
+    public unsafe partial struct redb_database_options
     {
         public nuint cache_size;
         public redb_backend backend;
     }
 
 
-    internal enum redb_backend : uint
+    public enum redb_backend : uint
     {
         File,
         InMemory,
     }
 
-    internal enum redb_durability : uint
+    public enum redb_durability : uint
     {
         None,
         Immediate,
