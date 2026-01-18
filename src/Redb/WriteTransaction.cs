@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Redb.Internal;
+using Redb.Interop;
 
 namespace Redb;
 

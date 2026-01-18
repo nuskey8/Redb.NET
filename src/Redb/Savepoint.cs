@@ -1,4 +1,5 @@
 using Redb.Internal;
+using Redb.Interop;
 
 namespace Redb;
 

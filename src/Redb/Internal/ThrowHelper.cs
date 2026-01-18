@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using Redb.Interop;
 
 namespace Redb.Internal;
 

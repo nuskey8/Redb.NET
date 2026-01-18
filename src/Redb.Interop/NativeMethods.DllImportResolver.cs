@@ -3,7 +3,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Redb;
+namespace Redb.Interop;
 
 partial class NativeMethods
 {
