@@ -62,8 +62,8 @@ jobs:
               
               # Copy to Redb/runtimes for win, osx, linux
               if [[ "$runtime" =~ ^(win-|osx-|linux-) ]]; then
-                mkdir -p "../src/Redb/runtimes/$runtime/native"
-                cp -v "$dir"/* "../src/Redb/runtimes/$runtime/native/"
+                mkdir -p "../src/Redb.Interop/runtimes/$runtime/native"
+                cp -v "$dir"/* "../src/Redb.Interop/runtimes/$runtime/native/"
               fi
 
               # Copy to Unity Plugins directory (all platforms)
