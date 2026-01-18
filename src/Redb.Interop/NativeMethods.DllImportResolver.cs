@@ -8,9 +8,6 @@ namespace Redb.Interop;
 partial class NativeMethods
 {
     // https://docs.microsoft.com/en-us/dotnet/standard/native-interop/cross-platform
-    // Library path will search
-    // win => __DllName, __DllName.dll
-    // linux, osx => __DllName.so, __DllName.dylib
 
     static NativeMethods()
     {
@@ -21,31 +18,23 @@ partial class NativeMethods
     {
         if (libraryName == __DllName)
         {
-#if DEBUG
-            var combinedPath = Path.Combine(AppContext.BaseDirectory, libraryName);
-            if (File.Exists(combinedPath) || File.Exists(combinedPath + ".dll"))
-            {
-                return NativeLibrary.Load(combinedPath, assembly, searchPath);
-            }
-#endif
-
             var path = "runtimes/";
-            var extension = "";
+            string? fileName;
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 path += "win-";
-                extension = ".dll";
+                fileName = "redb.dll";
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
                 path += "osx-";
-                extension = ".dylib";
+                fileName = "libredb.dylib";
             }
             else
             {
                 path += "linux-";
-                extension = ".so";
+                fileName = "libredb.so";
             }
 
             if (RuntimeInformation.OSArchitecture == Architecture.X86)
@@ -61,7 +50,7 @@ partial class NativeMethods
                 path += "arm64";
             }
 
-            path += "/native/" + __DllName + extension;
+            path += "/native/" + fileName;
 
             return NativeLibrary.Load(Path.Combine(AppContext.BaseDirectory, path), assembly, searchPath);
         }

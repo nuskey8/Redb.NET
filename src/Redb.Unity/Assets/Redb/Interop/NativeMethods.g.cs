@@ -12,7 +12,12 @@ namespace Redb.Interop
 {
     public static unsafe partial class NativeMethods
     {
-        const string __DllName = "libredb";
+#if UNITY_IOS && !UNITY_EDITOR
+        const string __DllName = "__Internal";
+#else
+        const string __DllName = "redb";
+#endif
+        
 
         public const int REDB_OK = 0;
         public const int REDB_ERROR_FILE_ERROR = 1;
