@@ -25,9 +25,4 @@
     <ProjectReference Include="..\Redb\Redb.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Include="..\..\README.md" Pack="true" PackagePath="README.md" />
-    <EmbeddedResource Include="..\..\LICENSE" />
-  </ItemGroup>
-
 </Project> 
