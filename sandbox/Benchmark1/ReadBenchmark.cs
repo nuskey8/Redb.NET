@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using BenchmarkDotNet.Attributes;
 using CsSqlite;
 using LiteDB;
@@ -101,11 +102,18 @@ public class ReadBenchmark
     public void Redb_FindByKey()
     {
         using var tx = redbDatabase.BeginRead();
-        var table = tx.OpenTable<int, string>("items");
+        var table = tx.OpenTable("items");
+
+        static RedbBlob Get(ReadOnlyTable table, int id)
+        {
+            Span<byte> keySpan = stackalloc byte[sizeof(int)];
+            MemoryMarshal.Write(keySpan, id);
+            return table.Get(keySpan);
+        }
 
         for (var i = 0; i < READ_COUNT; i++)
         {
-            _ = table.Get(readKeys[i]);
+            _ = Get(table, readKeys[i]);
         }
     }
 
