@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/sandbox/">
+    <Project Path="sandbox/Benchmark1/Benchmark1.csproj" />
     <Project Path="sandbox/ConsoleApp1/ConsoleApp1.csproj" />
   </Folder>
   <Folder Name="/src/">
