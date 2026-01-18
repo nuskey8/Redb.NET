@@ -16,6 +16,16 @@ Redb.NETはRust実装の組み込みDBである[redb](https://github.com/cberner
 
 Redb.NETはredbの高レベルなバインディングであり、C#向けの扱いやすいAPIを提供します。バインディング層のパフォーマンスも入念にチューニングされているため、パフォーマンス上のオーバーヘッドはありません。
 
+## ベンチマーク
+
+### Insert bulk (1000 items)
+
+![](/docs/images/img-bench-insert.png)
+
+### Find by integer key (10000 items, 1000 reads)
+
+![](/docs/images/img-bench-findbykey.png)
+
 ## インストール
 
 > [!WARNING]
