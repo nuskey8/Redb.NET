@@ -69,24 +69,24 @@ jobs:
               # Copy to Unity Plugins directory (all platforms)
               case "$runtime" in
                 osx-x64|osx-arm64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  mkdir -p "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime"
+                  cp -v "$dir"/libredb.dylib "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime/" 2>/dev/null || true
                   ;;
                 linux-x64|linux-arm64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  mkdir -p "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime/" 2>/dev/null || true
                   ;;
                 win-x64|win-arm64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/redb.dll "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime/redb.dll"
+                  mkdir -p "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime"
+                  cp -v "$dir"/redb.dll "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime/redb.dll"
                   ;;
                 android-arm64|android-armv7|android-x86_64)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  mkdir -p "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime"
+                  cp -v "$dir"/libredb.so "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime/" 2>/dev/null || true
                   ;;
                 ios-arm64|ios-arm64-simulator|ios-x64-simulator)
-                  mkdir -p "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime"
-                  cp -v "$dir"/libredb.a "../src/Redb.Unity/Assets/Redb/Runtime/Plugins/$runtime/" 2>/dev/null || true
+                  mkdir -p "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime"
+                  cp -v "$dir"/libredb.a "../src/Redb.Unity/Assets/Redb/Interop/Plugins/$runtime/" 2>/dev/null || true
                   ;;
               esac
             fi
