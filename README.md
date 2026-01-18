@@ -63,13 +63,13 @@ Redb.NET supports the following platforms:
 |          | arm64                 | ✅            |              |
 | macOS    | x64                   | ✅            |              |
 |          | arm64 (Apple Silicon) | ✅            |              |
-|          | Universal (x64+arm64) | ✅            |              |
 | Linux    | x64                   | ✅            |              |
 |          | arm64                 | ✅            |              |
 | iOS      | arm64                 | ✅ (untested) | (Unity only) |
 |          | x64                   | ✅ (untested) | (Unity only) |
 | Android  | arm64                 | ✅ (untested) | (Unity only) |
-|          | x64                   | ✅ (untested) | (Unity only) |
+|          | armv7                 | ✅ (untested) | (Unity only) |
+|          | x86_64                | ✅ (untested) | (Unity only) |
 
 ## Quick Start
 

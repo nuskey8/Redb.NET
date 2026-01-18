@@ -64,13 +64,13 @@ Redb.NETは以下のプラットフォームに対応しています。
 |                  | arm64                   | ✅             |             |
 | macOS            | x64                     | ✅             |             |
 |                  | arm64  (Apple Silicon)  | ✅             |             |
-|                  | Universal (x64 + arm64) | ✅             |             |
 | Linux            | x64                     | ✅             |             |
 |                  | arm64                   | ✅             |             |
 | iOS              | arm64                   | ✅    (未検証) | (Unityのみ) |
 |                  | x64                     | ✅   (未検証)  | (Unityのみ) |
 | Android          | arm64                   | ✅   (未検証)  | (Unityのみ) |
-|                  | x64                     | ✅   (未検証)  | (Unityのみ) |
+|                  | armv7                   | ✅   (未検証)  | (Unityのみ) |
+|                  | x86_64                  | ✅   (未検証)  | (Unityのみ) |
 
 ## クイックスタート
 
