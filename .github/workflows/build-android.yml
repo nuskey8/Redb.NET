@@ -16,10 +16,10 @@ jobs:
             runtime: android-arm64
           - arch: armeabi-v7a
             target: armv7-linux-androideabi
-            runtime: android-arm
+            runtime: android-arm7
           - arch: x86_64
             target: x86_64-linux-android
-            runtime: android-x64
+            runtime: android-x86_64
 
     steps:
       - name: Checkout
