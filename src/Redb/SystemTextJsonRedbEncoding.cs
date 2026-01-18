@@ -5,9 +5,25 @@ using System.Text.Json;
 
 namespace Redb.SystemTextJson;
 
-public sealed class SystemTextJsonRedbEncoding : IRedbEncoding
+public sealed class SystemTextJsonRedbEncoding(JsonSerializerOptions? options) : IRedbEncoding
 {
-    public static readonly SystemTextJsonRedbEncoding Instance = new();
+    [ThreadStatic] static (Utf8JsonWriter? jsonWriter, ArrayBufferWriter<byte>? bufferWriter) writers;
+    static (Utf8JsonWriter, ArrayBufferWriter<byte>) GetWriters()
+    {
+        var (jw, bw) = writers;
+        if (jw == null || bw == null)
+        {
+            bw = new ArrayBufferWriter<byte>(256);
+            jw = new Utf8JsonWriter(bw);
+            writers = (jw, bw);
+        }
+        else
+        {
+            bw.Clear();
+            jw.Reset();
+        }
+        return (jw, bw);
+    }
 
     public bool TryEncode<T>(T value, Span<byte> buffer, out int bytesWritten)
     {
@@ -16,7 +32,9 @@ public sealed class SystemTextJsonRedbEncoding : IRedbEncoding
             return PrimitiveRedbEncoding.Instance.TryEncode(value, buffer, out bytesWritten);
         }
 
-        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(value);
+        var (writer, bufferWriter) = GetWriters();
+        JsonSerializer.Serialize(writer, value, options);
+        var jsonBytes = bufferWriter.WrittenSpan;
         if (buffer.Length < jsonBytes.Length)
         {
             bytesWritten = 0;
@@ -34,15 +52,15 @@ public sealed class SystemTextJsonRedbEncoding : IRedbEncoding
             return PrimitiveRedbEncoding.Instance.Decode<T>(data);
         }
 
-        return JsonSerializer.Deserialize<T>(data)!;
+        return JsonSerializer.Deserialize<T>(data, options)!;
     }
 }
 
 public static class SystemTextJsonRedbEncodingExtensions
 {
-    public static RedbDatabase WithJsonSerializer(this RedbDatabase database)
+    public static RedbDatabase WithJsonSerializer(this RedbDatabase database, JsonSerializerOptions? options = null)
     {
-        database.Encoding = SystemTextJsonRedbEncoding.Instance;
+        database.Encoding = new SystemTextJsonRedbEncoding(options);
         return database;
     }
 }
